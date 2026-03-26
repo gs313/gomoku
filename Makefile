@@ -2,6 +2,7 @@ NAME = Gomoku
 PYTHON = python3
 VENV = venv
 ACTIVATE = . $(VENV)/bin/activate
+MODE = vs
 
 MAIN = main.py
 
@@ -14,6 +15,7 @@ $(VENV)/bin/activate: requirements.txt
 
 $(NAME): $(VENV)/bin/activate
 	$(ACTIVATE) && $(PYTHON) $(MAIN)
+
 
 
 clean:
