@@ -10,30 +10,38 @@ if __name__ == "__main__":
 
     running = True
     ai_turn = False
+    ai_thinking = False
 
     while running:
+
         # =========================
-        # INPUT
+        # EVENT LOOP
         # =========================
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                if ai_turn or ai_thinking:
+                    continue
+
                 cell = ui.get_cell(pygame.mouse.get_pos())
 
-                if cell and not ai_turn:
-                    if game.put(*cell):
-                        print("Human:", cell)
-                        ai_turn = True  # 🔥 defer AI
-                        ui.draw_board()
-                        ui.draw_stones()
-                        pygame.display.flip()
+                if cell and game.put(*cell):
+                    print("Human:", cell)
+
+                    ui.draw_board()
+                    ui.draw_stones()
+                    pygame.display.flip()
+
+                    ai_turn = True
 
         # =========================
-        # AI TURN (next frame)
+        # AI TURN
         # =========================
         if ai_turn:
+            ai_thinking = True
+
             ai_move = ai.find_best_move(game.current_player)
 
             if ai_move:
@@ -41,17 +49,7 @@ if __name__ == "__main__":
                 print("AI:", ai_move)
 
             ai_turn = False
-
-        # =========================
-        # WIN CHECK
-        # =========================
-        if game.board.check_win(1):
-            print("Black wins!")
-            running = False
-
-        if game.board.check_win(-1):
-            print("White wins!")
-            running = False
+            ai_thinking = False
 
         # =========================
         # RENDER
