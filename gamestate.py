@@ -1,38 +1,39 @@
+from board import Board, BLACK, WHITE
+
+
 class GameState:
     BOARD_SIZE = 19
 
     def __init__(self):
-        self.black = 0
-        self.white = 0
-        self.current_player = 1  # 1 = black, -1 = white
+        self.board = Board()
+        self.current_player = BLACK
 
-    def pos_to_bit(self, x, y):
-        return x * self.BOARD_SIZE + y
+    # =========================
+    # UI COMPATIBILITY
+    # =========================
+
+    @property
+    def black(self):
+        return self.board.black_bits
+
+    @property
+    def white(self):
+        return self.board.white_bits
+
+    # =========================
+    # GAME ACTIONS
+    # =========================
 
     def has_stone(self, x, y):
-        bit = 1 << self.pos_to_bit(x, y)
-        return (self.black & bit) or (self.white & bit)
+        return self.board.has_stone(x, y)
 
     def put(self, x, y):
-        if self.has_stone(x, y):
+        if not self.board.play(x, y, self.current_player):
             return False
-
-        bit = 1 << self.pos_to_bit(x, y)
-
-        if self.current_player == 1:
-            self.black |= bit
-        else:
-            self.white |= bit
 
         self.current_player *= -1
         return True
 
-    def undo(self, x, y):
-        bit = 1 << self.pos_to_bit(x, y)
-
-        if self.black & bit:
-            self.black &= ~bit
-        elif self.white & bit:
-            self.white &= ~bit
-
+    def undo(self):
+        self.board.undo()
         self.current_player *= -1
