@@ -16,6 +16,7 @@ if __name__ == "__main__":
                 cell = ui.get_cell(pygame.mouse.get_pos())
                 if cell:
                     game.put(*cell)
+                    print(*cell)
 
         ui.draw_board()
         ui.draw_stones()
