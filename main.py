@@ -4,9 +4,13 @@ from gamegui import GameUI
 from minimax import MinimaxAI
 
 if __name__ == "__main__":
+    pygame.init()
+    clock = pygame.time.Clock()
     game = GameState()
     ui = GameUI(game)
-    ai = MinimaxAI(game.board, max_depth=4)
+    ai = MinimaxAI(game.board, max_depth=20,time_limit=1)
+    ui.draw_board()
+    pygame.display.flip()
 
     running = True
     ai_turn = False
@@ -14,9 +18,6 @@ if __name__ == "__main__":
 
     while running:
 
-        # =========================
-        # EVENT LOOP
-        # =========================
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -29,17 +30,15 @@ if __name__ == "__main__":
 
                 if cell and game.put(*cell):
                     print("Human:", cell)
-
+                    ai_turn = True
                     ui.draw_board()
                     ui.draw_stones()
                     pygame.display.flip()
+                    if game.board.check_win(1):
+                        print("Black wins!")
+                        running = False
 
-                    ai_turn = True
-
-        # =========================
-        # AI TURN
-        # =========================
-        if ai_turn:
+        if ai_turn and running:
             ai_thinking = True
 
             ai_move = ai.find_best_move(game.current_player)
@@ -47,13 +46,18 @@ if __name__ == "__main__":
             if ai_move:
                 game.put(*ai_move)
                 print("AI:", ai_move)
+                ui.draw_board()
+                ui.draw_stones()
+                pygame.display.flip()
+                if game.board.check_win(-1):
+                    print("White wins!")
+                    running = False
 
             ai_turn = False
             ai_thinking = False
+            pygame.event.clear(pygame.MOUSEBUTTONDOWN)
 
-        # =========================
-        # RENDER
-        # =========================
-        ui.draw_board()
-        ui.draw_stones()
-        pygame.display.flip()
+        
+
+        
+        
