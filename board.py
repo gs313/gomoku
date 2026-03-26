@@ -232,3 +232,39 @@ class Board:
             return [(SIZE//2, SIZE//2)]
 
         return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
+
+    def check_win(self, player):
+        for (x, y, p, _) in self.moves:
+            if p != player:
+                continue
+
+            if self._check_from(x, y, player):
+                return True
+
+        return False
+
+
+    def _check_from(self, x, y, player):
+        directions = [(1,0), (0,1), (1,1), (1,-1)]
+
+        for dx, dy in directions:
+            count = 1
+
+            # forward
+            nx, ny = x + dx, y + dy
+            while self._inside(nx, ny) and self._is_player(nx, ny, player):
+                count += 1
+                nx += dx
+                ny += dy
+
+            # backward
+            nx, ny = x - dx, y - dy
+            while self._inside(nx, ny) and self._is_player(nx, ny, player):
+                count += 1
+                nx -= dx
+                ny -= dy
+
+            if count >= 5:
+                return True
+
+        return False

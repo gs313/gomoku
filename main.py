@@ -1,23 +1,61 @@
+import pygame
 from gamestate import GameState
 from gamegui import GameUI
-import pygame
+from minimax import MinimaxAI
 
 if __name__ == "__main__":
     game = GameState()
     ui = GameUI(game)
+    ai = MinimaxAI(game.board, max_depth=4)
 
     running = True
+    ai_turn = False
+
     while running:
+        # =========================
+        # INPUT
+        # =========================
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 cell = ui.get_cell(pygame.mouse.get_pos())
-                if cell:
-                    game.put(*cell)
-                    print(*cell)
 
+                if cell and not ai_turn:
+                    if game.put(*cell):
+                        print("Human:", cell)
+                        ai_turn = True  # 🔥 defer AI
+                        ui.draw_board()
+                        ui.draw_stones()
+                        pygame.display.flip()
+
+        # =========================
+        # AI TURN (next frame)
+        # =========================
+        if ai_turn:
+            ai_move = ai.find_best_move(game.current_player)
+
+            if ai_move:
+                game.put(*ai_move)
+                print("AI:", ai_move)
+
+            ai_turn = False
+
+        # =========================
+        # WIN CHECK
+        # =========================
+        if game.board.check_win(1):
+            print("Black wins!")
+            running = False
+
+        if game.board.check_win(-1):
+            print("White wins!")
+            running = False
+
+        # =========================
+        # RENDER
+        # =========================
         ui.draw_board()
         ui.draw_stones()
         pygame.display.flip()
