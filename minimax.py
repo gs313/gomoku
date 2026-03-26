@@ -1,13 +1,15 @@
 from heuristic import Heuristic
 from move_generator import MoveGenerator
+import time
 
 INF = 10**12
 
 
 class MinimaxAI:
-    def __init__(self, board, max_depth=6):
+    def __init__(self, board, max_depth=6, time_limit=None):
         self.board = board
         self.max_depth = max_depth
+        self.time_limit = time_limit
 
         self.heuristic = Heuristic(board)
         self.move_gen = MoveGenerator(board)
@@ -21,6 +23,9 @@ class MinimaxAI:
     def find_best_move(self, player):
         self.tt.clear()  # 🔥 reset cache
 
+        self.start_time = time.time()
+        self.stop = False
+
         best_move = None
 
         for depth in range(1, self.max_depth + 1):
@@ -31,6 +36,11 @@ class MinimaxAI:
 
         return best_move
 
+    def _time_exceeded(self):
+        if self.time_limit is None:
+            return False
+
+        return (time.time() - self.start_time) >= self.time_limit
     # =========================
     # ROOT SEARCH
     # =========================
@@ -82,6 +92,10 @@ class MinimaxAI:
     # =========================
 
     def _alphabeta(self, depth, alpha, beta, player, maximizing, root_player):
+        # ⏱️ TIME CHECK
+        if self._time_exceeded():
+            self.stop = True
+            return self.heuristic.evaluate(root_player)
         key = (self._hash(), depth, maximizing, player)
 
         if key in self.tt:
