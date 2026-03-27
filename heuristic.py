@@ -12,11 +12,17 @@ class Heuristic:
     def evaluate(self, player):
         opponent = -player
 
-        # 🔥 Immediate win / loss detection
+        #  Immediate win / loss detection
         if self.board.check_win(player):
             return 10**9
         if self.board.check_win(opponent):
             return -10**9
+
+        if self.board.captures[player] >= 8:
+            return 5 * 10**8   # almost winning
+
+        if self.board.captures[opponent] >= 8:
+            return -5 * 10**8  # must block immediately
 
         my_score = self._evaluate_player(player)
         opp_score = self._evaluate_player(opponent)
@@ -56,7 +62,15 @@ class Heuristic:
                 score += self._evaluate_direction(x, y, dx, dy, player)
 
         # capture bonus
-        score += self.board.captures[player] * 800
+        c = self.board.captures[player]
+
+        if c >= 8:
+            score += 20000   # super dangerous
+        elif c >= 6:
+            score += 5000
+        else:
+            score += c * 800
+        # score += self.board.captures[player] * 800
 
         return score
 
@@ -142,6 +156,10 @@ class Heuristic:
 
             if threes >= 2:
                 bonus += 5000
+
+            if self.board.captures[player] >= 10:
+                self.board.undo()
+                return 10**9  # instant win move
 
             self.board.undo()
 
