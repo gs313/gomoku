@@ -15,6 +15,15 @@ class GameUI:
         self.black_stone = create_raytraced_stone(30, True)
         self.white_stone = create_raytraced_stone(30, False)
         self.animations = []
+        self.turn = "Your Turn"
+        self.player = 1
+        self.text_colour = (70, 130, 255) 
+        self.running = True
+        self.ai_turn = False
+        self.ai_thinking = False
+        self.just_played = False
+        self.winner = None
+        self.mode = None
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))

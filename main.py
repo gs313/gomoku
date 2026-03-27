@@ -2,15 +2,17 @@ import pygame
 from gamestate import GameState
 from gamegui import GameUI
 from minimax import MinimaxAI
-import argparse
 
 
-def check_win(game):
+def check_win(game, ui):
     if game.board.check_win(1):
-        return "Black Wins!"
+        ui.ai_turn = False
+        ui.winner = "Black Wins!"
+        ui.draw_winner(ui.winner)
     if game.board.check_win(-1):
-        return "White Wins!"
-    return None
+        ui.ai_turn = False
+        ui.winner = "White Wins!"
+        ui.draw_winner(ui.winner)
 
 def update_cursor(ui, mouse_pos):
     if (ui.btn_vs.collidepoint(mouse_pos) or
@@ -20,24 +22,79 @@ def update_cursor(ui, mouse_pos):
     else:
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-def set_mode(running, mode):
+def set_mode(ui):
     mouse_pos = pygame.mouse.get_pos()
         
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            ui.running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if ui.btn_vs.collidepoint(mouse_pos):
-                mode = "vs"
+                ui.mode = "vs"
             elif ui.btn_ai.collidepoint(mouse_pos):
-                mode = "ai"
+                ui.mode = "ai"
             elif ui.btn_quit.collidepoint(mouse_pos):
-                mode = "quit"
-                running = False
+                ui.mode = "quit"
+                ui.running = False
     ui.draw_menu(mouse_pos)
     pygame.display.flip()
     update_cursor(ui, mouse_pos)
-    return mode, running
+
+def play_turn(ui, game):
+    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            ui.running = False
+            break
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                ui.running = False
+                break
+            elif event.key == pygame.K_r and ui.winner:
+                game = GameState()
+                ui = GameUI(game)
+                ui.winner = None
+                ui.mode = None
+            elif event.key == pygame.K_q and ui.winner:
+                ui.running = False
+                break
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if ui.winner or ui.ai_thinking or ui.winner:
+                continue
+            
+            cell = ui.get_cell(pygame.mouse.get_pos())
+            if cell and game.put(*cell):
+                if ui.mode == "vs":
+                    if ui.player == 1:
+                        ui.player = 2
+                        ui.turn = f"Player {ui.player} turn"
+                        ui.text_colour = (240, 240, 240)
+                    else:
+                        ui.player = 1
+                        ui.turn = f"Player {ui.player} Turn"
+                        ui.text_colour = (70, 130, 255) 
+                else:
+                    ui.turn = "AI Turn"
+                    ui.ai_turn = True
+                    ui.text_colour = (255, 80, 80)
+                    ui.just_played = True
+
+def ai_turn(ui, game):
+    if ui.just_played:
+        ui.just_played = False
+    else:
+        ui.ai_thinking = True
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_WAIT)
+        ai_move = ai.find_best_move(game.current_player)
+        if ai_move:
+            game.put(*ai_move)
+            print("AI:", ai_move)
+            ui.ai_turn = False
+            ui.ai_thinking = False
+            ui.turn = "Your Turn"
+            ui.text_colour = (70, 130, 255)
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            pygame.event.clear(pygame.MOUSEBUTTONDOWN)
 
 if __name__ == "__main__":
 
@@ -45,96 +102,23 @@ if __name__ == "__main__":
     pygame.font.init()
     pygame.display.set_caption("Gomoku")
     clock = pygame.time.Clock()
-
-    turn = "Your Turn"
-    player = 1
-    text_colour = (70, 130, 255) 
-
     game = GameState()
     ui = GameUI(game)
     ai = MinimaxAI(game.board, max_depth=20,time_limit=1)
-    ui.draw_board()
-    ui.draw_text(turn, 50, text_colour)
-    pygame.display.flip()
-
-    running = True
-    ai_turn = False
-    ai_thinking = False
-    just_played = False
-    winner = None
-    mode = None
     
-    while running:
-        if mode is None:
-            mode, running = set_mode(running, mode)
+    while ui.running:
+        if ui.mode is None:
+            set_mode(ui)
             continue
-        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                break
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                    break
-                elif event.key == pygame.K_r and winner:
-                    game = GameState()
-                    ui = GameUI(game)
-                    winner = None
-                    mode = None
-                elif event.key == pygame.K_q and winner:
-                    running = False
-                    break
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if ai_turn or ai_thinking or winner:
-                    continue
-                
-
-                cell = ui.get_cell(pygame.mouse.get_pos())
-
-                if cell and game.put(*cell):
-                    if mode == "vs":
-                        if player == 1:
-                            player = 2
-                            turn = f"Player {player} Turn"
-                            text_colour = (240, 240, 240)
-                        else:
-                            player = 1
-                            turn = f"Player {player} Turn"
-                            text_colour = (70, 130, 255) 
-                    else:
-                        turn = "AI Turn"
-                        ai_turn = True
-                        text_colour = (255, 80, 80)
-                        just_played = True
-
-        if ai_turn and running :
-            if just_played:
-                just_played = False
-            else:
-                ai_thinking = True
-                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_WAIT)
-
-                ai_move = ai.find_best_move(game.current_player)
-
-                if ai_move:
-                    game.put(*ai_move)
-                    print("AI:", ai_move)
-                    ai_turn = False
-                    ai_thinking = False
-                    turn = "Yout Turn"
-                    text_colour = (70, 130, 255)
-                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                    pygame.event.clear(pygame.MOUSEBUTTONDOWN)
+        play_turn(ui, game)
+        if ui.ai_turn and ui.running :
+            ai_turn(ai, game)
         
         ui.draw_board()
         ui.draw_stones()
-        ui.draw_text(turn, 50, text_colour)
-        if running:
-            winner = check_win(game)
-            if winner:
-                ai_turn = False
-                ui.draw_winner(winner)
+        ui.draw_text(ui.turn, 50, ui.text_colour)
+        if ui.running:
+            check_win(game, ui)
         pygame.display.flip()
         
                 
