@@ -24,7 +24,6 @@ def update_cursor(ui, mouse_pos):
 
 def set_mode(ui):
     mouse_pos = pygame.mouse.get_pos()
-        
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ui.running = False
@@ -54,6 +53,7 @@ def set_mode(ui):
 
 def play_turn(ui, game, ai):
     pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ui.running = False
@@ -68,10 +68,18 @@ def play_turn(ui, game, ai):
                 ai = MinimaxAI(game.board, max_depth=20, time_limit=1)
                 ui.winner = None
                 ui.mode = None
+                break
             elif event.key == pygame.K_q and ui.winner:
                 ui.running = False
                 break
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            if ui.btn_menu.collidepoint(mouse_pos):
+                game = GameState()
+                ui = GameUI(game)
+                ai = MinimaxAI(game.board, max_depth=20, time_limit=1)
+                ui.winner = None
+                ui.mode = None
+                break
             if ui.winner or ui.ai_thinking:
                 continue
             
@@ -129,10 +137,14 @@ if __name__ == "__main__":
         if ui.ai_turn and ui.running :
             ai_turn(ui, game, ai)
         
+        if ui.mode is None:
+            continue
         ui.draw_board()
         ui.draw_stones()
         ui.draw_text(ui.turn, 50, ui.text_colour)
         ui.draw_score(game)
+        mouse_pos = pygame.mouse.get_pos()
+        ui.btn_menu = ui.draw_back_button(mouse_pos)
         if ui.running:
             check_win(game, ui)
         pygame.display.flip()

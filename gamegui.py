@@ -25,6 +25,7 @@ class GameUI:
         self.winner = None
         self.mode = None
         self.show_rules = False
+        self.mouse_pos = (0, 0)
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))
@@ -143,11 +144,17 @@ class GameUI:
         self.btn_rules = self.draw_button("RULES", start_y + spacing * 2, mouse_pos)
         self.btn_quit = self.draw_button("QUIT", start_y + spacing * 3, mouse_pos)
 
-    def draw_button(self, text, y, mouse_pos):
-        font = pygame.font.SysFont(None, 42)
+    def draw_back_button(self, mouse_pos):
+        return self.draw_button("BACK TO MENU", self.WINDOW_SIZE - 35 , mouse_pos, 24, 50, 200)
+
+
+    def draw_button(self, text, y, mouse_pos, fontsize=42, height=70, width=None):
+        font = pygame.font.SysFont(None, fontsize)
 
         WIDTH = self.WINDOW_SIZE // 3
-        HEIGHT = 70
+        if width:
+            WIDTH = width
+        HEIGHT = height
 
         center_x = self.WINDOW_SIZE // 2
 
@@ -222,17 +229,50 @@ class GameUI:
 
         font = pygame.font.SysFont(None, 36)
 
-        pygame.draw.rect(self.screen, (40,40,40), (self.CELL_SIZE, 20, 100, 50), border_radius=10)
-        pygame.draw.circle(self.screen, (0,0,0), (self.CELL_SIZE + 30, 35), 20)
+        panel_w = 140
+        panel_h = 60
+        margin_y = 20
 
+        # ===== LEFT (BLACK) =====
+        left_x = self.CELL_SIZE
+
+        left_rect = pygame.Rect(left_x, margin_y, panel_w, panel_h)
+        pygame.draw.rect(self.screen, (80,80,80), left_rect, border_radius=10)
+        if game.current_player == 1:
+            pygame.draw.rect(self.screen, (200,200,200), left_rect, 3, border_radius=10)
+
+            glow = pygame.Surface((left_rect.width+12, left_rect.height+12), pygame.SRCALPHA)
+            pygame.draw.rect(glow, (200,200,200,60), glow.get_rect(), border_radius=12)
+            self.screen.blit(glow, (left_rect.x-6, left_rect.y-6))
+
+        # stone
+        pygame.draw.circle(self.screen, (0,0,0), (left_rect.x + 30, left_rect.centery), 18)
+
+        # text (center in remaining space)
         text = font.render(str(black_score), True, (255,255,255))
-        self.screen.blit(text, (60, 20))
+        text_rect = text.get_rect(center=(left_rect.x + 90, left_rect.centery))
+        self.screen.blit(text, text_rect)
 
-        pygame.draw.rect(self.screen, (40,40,40), (self.WINDOW_SIZE - self.CELL_SIZE - 100, 20, 100, 50), border_radius=10)
-        pygame.draw.circle(self.screen, (255,255,255), (self.WINDOW_SIZE - 30, 35), 20)
+        # ===== RIGHT (WHITE) =====
+        right_x = self.WINDOW_SIZE - self.CELL_SIZE - panel_w
 
+        right_rect = pygame.Rect(right_x, margin_y, panel_w, panel_h)
+        pygame.draw.rect(self.screen, (80,80,80), right_rect, border_radius=10)
+        # background brighter
+
+        if game.current_player == -1:
+            pygame.draw.rect(self.screen, (200,200,200), right_rect, 3, border_radius=10)
+
+            glow = pygame.Surface((right_rect.width+12, right_rect.height+12), pygame.SRCALPHA)
+            pygame.draw.rect(glow, (200,200,200,60), glow.get_rect(), border_radius=12)
+            self.screen.blit(glow, (right_rect.x-6, right_rect.y-6))
+                # stone
+        pygame.draw.circle(self.screen, (255,255,255), (right_rect.right - 30, right_rect.centery), 18)
+
+        # text
         text = font.render(str(white_score), True, (255,255,255))
-        self.screen.blit(text, (self.WINDOW_SIZE-self.CELL_SIZE, 20))
+        text_rect = text.get_rect(center=(right_rect.right - 90, right_rect.centery))
+        self.screen.blit(text, text_rect)
 
     def get_cell(self, pos):
         mx, my = pos
