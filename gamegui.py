@@ -24,6 +24,7 @@ class GameUI:
         self.just_played = False
         self.winner = None
         self.mode = None
+        self.show_rules = False
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))
@@ -139,7 +140,8 @@ class GameUI:
 
         self.btn_vs   = self.draw_button("PLAYER vs PLAYER", start_y, mouse_pos)
         self.btn_ai   = self.draw_button("PLAYER vs AI", start_y + spacing, mouse_pos)
-        self.btn_quit = self.draw_button("QUIT", start_y + spacing * 2, mouse_pos)
+        self.btn_rules = self.draw_button("RULES", start_y + spacing * 2, mouse_pos)
+        self.btn_quit = self.draw_button("QUIT", start_y + spacing * 3, mouse_pos)
 
     def draw_button(self, text, y, mouse_pos):
         font = pygame.font.SysFont(None, 42)
@@ -181,6 +183,39 @@ class GameUI:
         self.screen.blit(text_surf, text_rect)
 
         return box_rect
+    
+    def draw_rules(self):
+        overlay = pygame.Surface((self.WINDOW_SIZE, self.WINDOW_SIZE), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 200))
+        self.screen.blit(overlay, (0, 0))
+
+        box_w, box_h = 700, 500
+        box = pygame.Rect(0, 0, box_w, box_h)
+        box.center = (self.WINDOW_SIZE//2, self.WINDOW_SIZE//2)
+
+        pygame.draw.rect(self.screen, (40,40,50), box, border_radius=15)
+        pygame.draw.rect(self.screen, (200,200,200), box, 2, border_radius=15)
+
+        font_title = pygame.font.SysFont(None, 50)
+        font = pygame.font.SysFont(None, 30)
+
+        title = font_title.render("RULES", True, (255,255,255))
+        self.screen.blit(title, (box.x + 20, box.y + 20))
+
+        rules = [
+            "• Place stones on intersections",
+            "• First to get 5 in a row wins",
+            "• Capture enemy stones by surrounding",
+            "• Horizontal, vertical, diagonal all count",
+            "",
+            "Press ESC or click to close"
+        ]
+
+        y = box.y + 100
+        for line in rules:
+            text = font.render(line, True, (220,220,220))
+            self.screen.blit(text, (box.x + 40, y))
+            y += 40
     
     def draw_score(self, game):
         black_score, white_score = game.board.get_capture_counts()

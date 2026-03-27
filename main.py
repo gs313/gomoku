@@ -28,15 +28,27 @@ def set_mode(ui):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             ui.running = False
+            continue
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            if ui.show_rules:
+                ui.show_rules = False
+                continue
             if ui.btn_vs.collidepoint(mouse_pos):
                 ui.mode = "vs"
             elif ui.btn_ai.collidepoint(mouse_pos):
                 ui.mode = "ai"
+            elif ui.btn_rules.collidepoint(mouse_pos):
+                ui.show_rules = True
             elif ui.btn_quit.collidepoint(mouse_pos):
                 ui.mode = "quit"
                 ui.running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                if ui.show_rules:
+                    ui.show_rules = False
     ui.draw_menu(mouse_pos)
+    if ui.show_rules:
+        ui.draw_rules()
     pygame.display.flip()
     update_cursor(ui, mouse_pos)
 
@@ -79,6 +91,7 @@ def play_turn(ui, game, ai):
                     ui.ai_turn = True
                     ui.text_colour = (255, 80, 80)
                     ui.just_played = True
+
     return ui, game, ai
 
 def ai_turn(ui, game, ai):
