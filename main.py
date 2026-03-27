@@ -40,7 +40,7 @@ def set_mode(ui):
     pygame.display.flip()
     update_cursor(ui, mouse_pos)
 
-def play_turn(ui, game):
+def play_turn(ui, game, ai):
     pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -53,13 +53,14 @@ def play_turn(ui, game):
             elif event.key == pygame.K_r and ui.winner:
                 game = GameState()
                 ui = GameUI(game)
+                ai = MinimaxAI(game.board, max_depth=20, time_limit=1)
                 ui.winner = None
                 ui.mode = None
             elif event.key == pygame.K_q and ui.winner:
                 ui.running = False
                 break
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if ui.winner or ui.ai_thinking or ui.winner:
+            if ui.winner or ui.ai_thinking:
                 continue
             
             cell = ui.get_cell(pygame.mouse.get_pos())
@@ -78,8 +79,9 @@ def play_turn(ui, game):
                     ui.ai_turn = True
                     ui.text_colour = (255, 80, 80)
                     ui.just_played = True
+    return ui, game, ai
 
-def ai_turn(ui, game):
+def ai_turn(ui, game, ai):
     if ui.just_played:
         ui.just_played = False
     else:
@@ -110,9 +112,9 @@ if __name__ == "__main__":
         if ui.mode is None:
             set_mode(ui)
             continue
-        play_turn(ui, game)
+        ui, game, ai = play_turn(ui, game, ai)
         if ui.ai_turn and ui.running :
-            ai_turn(ui, game)
+            ai_turn(ui, game, ai)
         
         ui.draw_board()
         ui.draw_stones()

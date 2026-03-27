@@ -187,17 +187,17 @@ class GameUI:
 
         font = pygame.font.SysFont(None, 36)
 
-        pygame.draw.rect(self.screen, (40,40,40), (10, 10, 100, 50), border_radius=10)
-        pygame.draw.circle(self.screen, (0,0,0), (self.CELL_SIZE, 35), 10)
+        pygame.draw.rect(self.screen, (40,40,40), (self.CELL_SIZE, 20, 100, 50), border_radius=10)
+        pygame.draw.circle(self.screen, (0,0,0), (self.CELL_SIZE + 30, 35), 20)
 
         text = font.render(str(black_score), True, (255,255,255))
-        self.screen.blit(text, (60, 25))
+        self.screen.blit(text, (60, 20))
 
-        pygame.draw.rect(self.screen, (40,40,40), (self.WINDOW_SIZE-190, 10, 100, 50), border_radius=10)
-        pygame.draw.circle(self.screen, (255,255,255), (self.WINDOW_SIZE-30, 35), 10)
+        pygame.draw.rect(self.screen, (40,40,40), (self.WINDOW_SIZE - self.CELL_SIZE - 100, 20, 100, 50), border_radius=10)
+        pygame.draw.circle(self.screen, (255,255,255), (self.WINDOW_SIZE - 30, 35), 20)
 
         text = font.render(str(white_score), True, (255,255,255))
-        self.screen.blit(text, (self.WINDOW_SIZE-self.CELL_SIZE, 25))
+        self.screen.blit(text, (self.WINDOW_SIZE-self.CELL_SIZE, 20))
 
     def get_cell(self, pos):
         mx, my = pos
