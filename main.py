@@ -112,18 +112,12 @@ if __name__ == "__main__":
             continue
         play_turn(ui, game)
         if ui.ai_turn and ui.running :
-            ai_turn(ai, game)
+            ai_turn(ui, game)
         
         ui.draw_board()
         ui.draw_stones()
         ui.draw_text(ui.turn, 50, ui.text_colour)
+        ui.draw_score(game)
         if ui.running:
             check_win(game, ui)
         pygame.display.flip()
-        
-                
-
-        
-
-        
-        
