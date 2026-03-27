@@ -21,7 +21,7 @@ class MoveGenerator:
         # sort descending
         scored.sort(key=lambda x: x[1], reverse=True)
 
-        return [move for (move, _) in scored[MAX_MOVES:]]
+        return [move for (move, _) in scored[:MAX_MOVES]]
 
     # =========================
     # SCORING FUNCTION
