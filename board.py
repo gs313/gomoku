@@ -234,18 +234,30 @@ class Board:
 
         return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
 
-    def check_win(self, player):
-        for (x, y, p, _) in self.moves:
-            if p != player:
-                continue
-            if not self._is_player(x, y, player):
-                continue
+    # def check_win(self, player):
+    #     for (x, y, p, _) in self.moves:
+    #         if p != player:
+    #             continue
+    #         if not self._is_player(x, y, player):
+    #             continue
 
-            if self._check_from(x, y, player):
-                return True
+    #         if self._check_from(x, y, player):
+    #             return True
+
+    #     return False
+
+    def check_win(self, player):
+        # 🏆 Capture win
+        if self.captures[player] >= 5:
+            return True
+
+        # 🏆 Line win (only check last move)
+        if self.last_move:
+            x, y = self.last_move
+            if self._is_player(x, y, player):
+                return self._check_from(x, y, player)
 
         return False
-
 
     def _check_from(self, x, y, player):
         directions = [(1,0), (0,1), (1,1), (1,-1)]
