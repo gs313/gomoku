@@ -149,6 +149,8 @@ class Heuristic:
         for (x, y) in moves:
             if self.board.has_stone(x, y):
                 continue
+            if not self.board.is_legal_move(x, y, player):
+                continue
 
             self.board.play(x, y, player)
 

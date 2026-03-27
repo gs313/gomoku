@@ -38,10 +38,125 @@ class Board:
     # PLAY / UNDO
     # =========================
 
-    def play(self, x, y, player):
+    # def play(self, x, y, player):
+    #     if self.has_stone(x, y):
+    #         return False
+
+    #     move = idx(x, y)
+    #     bit = 1 << move
+
+    #     # place
+    #     if player == BLACK:
+    #         self.black_bits |= bit
+    #     else:
+    #         self.white_bits |= bit
+
+    #     # apply captures first
+    #     captured = self._apply_captures(x, y, player)
+
+    #     # check double-three AFTER captures
+    #     free_threes = self._count_free_threes(x, y, player)
+
+    #     if free_threes >= 2 and len(captured) == 0:
+    #         # undo placement
+    #         print(f"double threes detected, undo placement {player}")
+    #         if player == BLACK:
+    #             self.black_bits &= ~bit
+    #         else:
+    #             self.white_bits &= ~bit
+
+    #         # undo captures
+    #         for cx, cy in captured:
+    #             restore_bit = 1 << idx(cx, cy)
+    #             if player == BLACK:
+    #                 self.white_bits |= restore_bit
+    #             else:
+    #                 self.black_bits |= restore_bit
+
+    #         self.captures[player] -= len(captured) // 2
+
+    #         return False
+
+    #     # accept move
+    #     self.moves.append((x, y, player, captured))
+    #     self.last_move = (x, y)
+
+    #     self._update_active_cells(x, y)
+
+    #     return True
+    def _count_free_threes_simulated(self, x, y, player, captured):
+        move_bit = 1 << idx(x, y)
+
+        player_bits = self.get_bits(player) | move_bit
+        opponent = -player
+        opponent_bits = self.get_bits(opponent)
+
+        for cx, cy in captured:
+            opponent_bits &= ~(1 << idx(cx, cy))
+
+        def is_player(nx, ny):
+            return player_bits & (1 << idx(nx, ny))
+
+        def is_empty(nx, ny):
+            bit = 1 << idx(nx, ny)
+            return not (player_bits & bit or opponent_bits & bit)
+
+        def is_free_three_dir(dx, dy):
+            line = []
+
+            for i in range(-4, 5):
+                nx = x + i*dx
+                ny = y + i*dy
+
+                if not self._inside(nx, ny):
+                    line.append(2)
+                elif is_player(nx, ny):
+                    line.append(1)
+                elif is_empty(nx, ny):
+                    line.append(0)
+                else:
+                    line.append(2)
+
+            center = 4
+
+            patterns = [
+                [0,1,1,1,0],
+                [0,1,1,0,1,0],
+                [0,1,0,1,1,0],
+            ]
+
+            for p in patterns:
+                L = len(p)
+                for i in range(len(line) - L + 1):
+                    if line[i:i+L] == p:
+                        if i <= center < i + L:
+                            return True
+
+            return False
+
+        count = 0
+        for dx, dy in [(1,0), (0,1), (1,1), (1,-1)]:
+            if is_free_three_dir(dx, dy):
+                count += 1
+
+        return count
+    def is_legal_move(self, x, y, player):
         if self.has_stone(x, y):
             return False
 
+        # simulate capture WITHOUT modifying board
+        captured = self._get_captures_preview(x, y, player)
+
+        free_threes = self._count_free_threes_simulated(x, y, player, captured)
+
+        if free_threes >= 2 and len(captured) == 0:
+            return False
+
+        return True
+    def play(self, x, y, player):
+        if not self.is_legal_move(x, y, player):
+            print(f"This print in play.. not legal {player}")
+            return False
         move = idx(x, y)
         bit = 1 << move
 
@@ -54,30 +169,6 @@ class Board:
         # apply captures first
         captured = self._apply_captures(x, y, player)
 
-        # check double-three AFTER captures
-        free_threes = self._count_free_threes(x, y, player)
-
-        if free_threes >= 2:
-            # undo placement
-            print("double threes detected, undo placement")
-            if player == BLACK:
-                self.black_bits &= ~bit
-            else:
-                self.white_bits &= ~bit
-
-            # undo captures
-            for cx, cy in captured:
-                restore_bit = 1 << idx(cx, cy)
-                if player == BLACK:
-                    self.white_bits |= restore_bit
-                else:
-                    self.black_bits |= restore_bit
-
-            self.captures[player] -= len(captured) // 2
-
-            return False
-
-        # accept move
         self.moves.append((x, y, player, captured))
         self.last_move = (x, y)
 
@@ -147,6 +238,41 @@ class Board:
 
         self.captures[player] += len(captured) // 2
         return captured
+
+    def _get_captures_preview(self, x, y, player):
+        opponent = -player
+        captured = []
+
+        directions = [
+            (1,0), (0,1), (1,1), (1,-1),
+            (-1,0), (0,-1), (-1,-1), (-1,1)
+        ]
+
+        for dx, dy in directions:
+            x1, y1 = x + dx, y + dy
+            x2, y2 = x + 2*dx, y + 2*dy
+            x3, y3 = x + 3*dx, y + 3*dy
+
+            # must stay inside board
+            if not (0 <= x3 < SIZE and 0 <= y3 < SIZE):
+                continue
+
+            # check pattern: player - opponent - opponent - player
+            if (self._is_opponent(x1, y1, opponent) and
+                self._is_opponent(x2, y2, opponent) and
+                self._is_player(x3, y3, player)):
+
+                captured.append((x1, y1))
+                captured.append((x2, y2))
+
+        return captured
+
+    def _is_opponent(self, x, y, opponent):
+        bit = 1 << idx(x, y)
+        if opponent == BLACK:
+            return self.black_bits & bit
+        else:
+            return self.white_bits & bit
 
     def _remove_stone(self, x, y, player):
         bit = ~(1 << idx(x, y))

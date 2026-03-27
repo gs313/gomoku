@@ -60,9 +60,11 @@ class MinimaxAI:
         for move in moves:
             x, y = move
 
-            if not self.board.play(x, y, player):
+            # if not self.board.play(x, y, player):
+            #     continue
+            if not self.board.is_legal_move(x, y, player):
                 continue
-
+            self.board.play(x, y, player)
             score = self._alphabeta(
                 depth - 1,
                 -INF,
@@ -119,8 +121,11 @@ class MinimaxAI:
             for move in moves:
                 x, y = move
 
-                if not self.board.play(x, y, player):
+                # if not self.board.play(x, y, player):
+                #     continue
+                if not self.board.is_legal_move(x, y, player):
                     continue
+                self.board.play(x, y, player)
 
                 score = self._alphabeta(
                     depth - 1,
@@ -145,8 +150,11 @@ class MinimaxAI:
             for move in moves:
                 x, y = move
 
-                if not self.board.play(x, y, player):
+                # if not self.board.play(x, y, player):
+                #     continue
+                if not self.board.is_legal_move(x, y, player):
                     continue
+                self.board.play(x, y, player)
 
                 score = self._alphabeta(
                     depth - 1,

@@ -15,6 +15,8 @@ class MoveGenerator:
         scored = []
 
         for (x, y) in moves:
+            if not self.board.is_legal_move(x, y, player):
+                continue
             score = self._score_move(x, y, player)
             scored.append(((x, y), score))
 
