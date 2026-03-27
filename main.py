@@ -12,6 +12,33 @@ def check_win(game):
         return "White Wins!"
     return None
 
+def update_cursor(ui, mouse_pos):
+    if (ui.btn_vs.collidepoint(mouse_pos) or
+        ui.btn_ai.collidepoint(mouse_pos) or
+        ui.btn_quit.collidepoint(mouse_pos)):
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    else:
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+def set_mode(running, mode):
+    mouse_pos = pygame.mouse.get_pos()
+        
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if ui.btn_vs.collidepoint(mouse_pos):
+                mode = "vs"
+            elif ui.btn_ai.collidepoint(mouse_pos):
+                mode = "ai"
+            elif ui.btn_quit.collidepoint(mouse_pos):
+                mode = "quit"
+                running = False
+    ui.draw_menu(mouse_pos)
+    pygame.display.flip()
+    update_cursor(ui, mouse_pos)
+    return mode, running
+
 if __name__ == "__main__":
 
     pygame.init()
@@ -39,22 +66,9 @@ if __name__ == "__main__":
     
     while running:
         if mode is None:
-            mouse_pos = pygame.mouse.get_pos()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if ui.btn_vs.collidepoint(mouse_pos):
-                        mode = "vs"
-                    elif ui.btn_ai.collidepoint(mouse_pos):
-                        mode = "ai"
-                    elif ui.btn_quit.collidepoint(mouse_pos):
-                        mode = "quit"
-                        running = False
-            ui.draw_menu(mouse_pos)
-            pygame.display.flip()
+            mode, running = set_mode(running, mode)
             continue
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -68,7 +82,7 @@ if __name__ == "__main__":
                     ui = GameUI(game)
                     winner = None
                     mode = None
-                elif event.key == pygame.Q_r and winner:
+                elif event.key == pygame.K_q and winner:
                     running = False
                     break
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -99,8 +113,7 @@ if __name__ == "__main__":
                 just_played = False
             else:
                 ai_thinking = True
-
-                pygame.event.clear(pygame.MOUSEBUTTONDOWN)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_WAIT)
 
                 ai_move = ai.find_best_move(game.current_player)
 
@@ -110,7 +123,8 @@ if __name__ == "__main__":
                     ai_turn = False
                     ai_thinking = False
                     turn = "Yout Turn"
-                    text_colour = (70, 130, 255) 
+                    text_colour = (70, 130, 255)
+                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
                     pygame.event.clear(pygame.MOUSEBUTTONDOWN)
         
         ui.draw_board()
