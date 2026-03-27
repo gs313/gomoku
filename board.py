@@ -173,37 +173,71 @@ class Board:
 
         return count
 
+    # def _is_free_three(self, x, y, dx, dy, player):
+    #     stones = 1
+    #     open_ends = 0
+
+    #     # forward
+    #     nx, ny = x + dx, y + dy
+    #     while self._inside(nx, ny):
+    #         if self._is_player(nx, ny, player):
+    #             stones += 1
+    #             nx += dx
+    #             ny += dy
+    #         elif self._is_empty(nx, ny):
+    #             open_ends += 1
+    #             break
+    #         else:
+    #             break
+
+    #     # backward
+    #     nx, ny = x - dx, y - dy
+    #     while self._inside(nx, ny):
+    #         if self._is_player(nx, ny, player):
+    #             stones += 1
+    #             nx -= dx
+    #             ny -= dy
+    #         elif self._is_empty(nx, ny):
+    #             open_ends += 1
+    #             break
+    #         else:
+    #             break
+
+    #     return stones == 3 and open_ends == 2
+
     def _is_free_three(self, x, y, dx, dy, player):
-        stones = 1
-        open_ends = 0
+        line = []
 
-        # forward
-        nx, ny = x + dx, y + dy
-        while self._inside(nx, ny):
-            if self._is_player(nx, ny, player):
-                stones += 1
-                nx += dx
-                ny += dy
+        for i in range(-4, 5):
+            nx = x + i*dx
+            ny = y + i*dy
+
+            if not self._inside(nx, ny):
+                line.append(2)  # blocked
             elif self._is_empty(nx, ny):
-                open_ends += 1
-                break
+                line.append(0)
+            elif self._is_player(nx, ny, player):
+                line.append(1)
             else:
-                break
+                line.append(2)
 
-        # backward
-        nx, ny = x - dx, y - dy
-        while self._inside(nx, ny):
-            if self._is_player(nx, ny, player):
-                stones += 1
-                nx -= dx
-                ny -= dy
-            elif self._is_empty(nx, ny):
-                open_ends += 1
-                break
-            else:
-                break
+        center = 4  # index of (x, y)
 
-        return stones == 3 and open_ends == 2
+        # patterns (as numeric)
+        patterns = [
+            [0,1,1,1,0],        # _XXX_
+            [0,1,1,0,1,0],      # _XX_X_
+            [0,1,0,1,1,0],      # _X_XX_
+        ]
+
+        for p in patterns:
+            L = len(p)
+            for i in range(len(line) - L + 1):
+                if line[i:i+L] == p:
+                    if i <= center < i + L:  # must include new move
+                        return True
+
+        return False
 
     def _inside(self, x, y):
         return 0 <= x < 19 and 0 <= y < 19
