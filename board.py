@@ -154,6 +154,8 @@ class Board:
             self.black_bits &= bit
         else:
             self.white_bits &= bit
+    def get_capture_counts(self):
+        return self.captures[BLACK], self.captures[WHITE]
 
 
     # =========================
@@ -233,18 +235,6 @@ class Board:
             return [(SIZE//2, SIZE//2)]
 
         return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
-
-    # def check_win(self, player):
-    #     for (x, y, p, _) in self.moves:
-    #         if p != player:
-    #             continue
-    #         if not self._is_player(x, y, player):
-    #             continue
-
-    #         if self._check_from(x, y, player):
-    #             return True
-
-    #     return False
 
     def check_win(self, player):
         # 🏆 Capture win
