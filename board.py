@@ -59,6 +59,7 @@ class Board:
 
         if free_threes >= 2:
             # undo placement
+            print("double threes detected, undo placement")
             if player == BLACK:
                 self.black_bits &= ~bit
             else:
@@ -236,6 +237,8 @@ class Board:
     def check_win(self, player):
         for (x, y, p, _) in self.moves:
             if p != player:
+                continue
+            if not self._is_player(x, y, player):
                 continue
 
             if self._check_from(x, y, player):
