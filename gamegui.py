@@ -247,9 +247,12 @@ class GameUI:
 
             hover = rect.collidepoint(mouse_pos)
 
-            color = (120,120,150) if hover else (60,60,80)
+            color = (120,120,150)  if hover else (60,60,80)
+            if hover:
+                rect.inflate_ip(10, 6)
             pygame.draw.rect(self.screen, color, rect, border_radius=10)
-
+            border_color = (255,255,255) if hover  else (180,180,180)
+            pygame.draw.rect(self.screen, border_color, rect, 2, border_radius=10)
             font = pygame.font.SysFont(None, 32)
             text = font.render(opt, True, (255,255,255))
             text_rect = text.get_rect(center=rect.center)
