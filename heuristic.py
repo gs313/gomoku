@@ -27,12 +27,30 @@ class Heuristic:
         my_score = self._evaluate_player(player)
         opp_score = self._evaluate_player(opponent)
 
+        dynamic_bonus = 0
+
+        if self.board.moves:
+            x, y, last_player, _ = self.board.moves[-1]
+
+            # 🚨 opponent just played something dangerous
+            if last_player == opponent:
+                if self._is_open_four(x, y, opponent):
+                    dynamic_bonus -= 15000  # must block NOW
+                if self._is_open_three(x, y, opponent):
+                    dynamic_bonus -= 4000
+
+            # 🔥 we just created pressure
+            if last_player == player:
+                if self._is_open_four(x, y, player):
+                    dynamic_bonus += 10000
+
+
         # optional: only enable double-threat later if we decide to do additional rule
         # # threat_bonus = 0
         # if len(self.board.moves) > 6:
         #     threat_bonus = self._double_threat_bonus(player)
 
-        return my_score - 1.2 * opp_score
+        return my_score - 1.2 * opp_score +dynamic_bonus
 
     # =========================
     # PLAYER SCORE (INCREMENTAL)
@@ -44,7 +62,7 @@ class Heuristic:
         if not self.board.moves:
             return 0
 
-        # 🔥 Only evaluate around recent moves (performance critical)
+        #  Only evaluate around recent moves (performance critical)
         positions = set()
 
         for (x, y, _, _) in self.board.moves[-6:]:
@@ -120,13 +138,13 @@ class Heuristic:
 
         if count == 4:
             if open_ends == 2:
-                return 10000  # open four
+                return 50000  # open four
             elif open_ends == 1:
-                return 5000   # closed four
+                return 10000   # closed four
 
         if count == 3:
             if open_ends == 2:
-                return 1000   # open three
+                return 3000   # open three
             elif open_ends == 1:
                 return 200
 
@@ -221,3 +239,41 @@ class Heuristic:
             return self.board.black_bits & bit
         else:
             return self.board.white_bits & bit
+    # =========================
+    # Dynamic Heuristic
+    # =========================
+    def _is_open_four(self, x, y, player):
+        for dx, dy in [(1,0), (0,1), (1,1), (1,-1)]:
+            count = 1
+            open_ends = 0
+
+            # forward
+            nx, ny = x + dx, y + dy
+            while self._inside(nx, ny):
+                if self._is_player(nx, ny, player):
+                    count += 1
+                    nx += dx
+                    ny += dy
+                elif self._is_empty(nx, ny):
+                    open_ends += 1
+                    break
+                else:
+                    break
+
+            # backward
+            nx, ny = x - dx, y - dy
+            while self._inside(nx, ny):
+                if self._is_player(nx, ny, player):
+                    count += 1
+                    nx -= dx
+                    ny -= dy
+                elif self._is_empty(nx, ny):
+                    open_ends += 1
+                    break
+                else:
+                    break
+
+            if count == 4 and open_ends >= 1:
+                return True
+
+        return False

@@ -32,6 +32,34 @@ class MoveGenerator:
     def _score_move(self, x, y, player):
         score = 0
 
+        # =========================
+        # 🔥 TACTICAL PRECHECK (IMPORTANT)
+        # =========================
+        prev_captures = self.board.captures[player]
+
+        self.board.play(x, y, player)
+
+        # 1. Immediate win (alignment or capture)
+        if self.board.check_win(player):
+            self.board.undo()
+            return 10**9
+
+        # 2. Block opponent immediate win
+        if self.board.check_win(-player):
+            score += 900000
+
+        # 3. Capture bonus (including winning capture)
+        if self.board.captures[player] > prev_captures:
+            score += 5000
+            if self.board.captures[player] >= 10:
+                score += 10**8
+
+        self.board.undo()
+
+        # =========================
+        # 📍 POSITIONAL HEURISTICS (your existing logic)
+        # =========================
+
         # center preference
         cx, cy = 9, 9
         score -= abs(x - cx) + abs(y - cy)

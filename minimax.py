@@ -50,9 +50,9 @@ class MinimaxAI:
         best_move = None
 
         moves = self.move_gen.generate(player)
-        moves = moves[:12]
+        moves = moves[:10]
 
-        # 🔥 move ordering from previous iteration
+        #  move ordering from previous iteration
         if prev_best in moves:
             moves.remove(prev_best)
             moves.insert(0, prev_best)
@@ -110,7 +110,7 @@ class MinimaxAI:
             return val
 
         moves = self.move_gen.generate(player)
-        moves = moves[:12]
+        moves = moves[:10]
 
         if not moves:
             return self.heuristic.evaluate(root_player)
