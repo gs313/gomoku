@@ -50,7 +50,7 @@ class Heuristic:
         # if len(self.board.moves) > 6:
         #     threat_bonus = self._double_threat_bonus(player)
 
-        return my_score - 1.5 * opp_score +dynamic_bonus
+        return my_score - 1.3 * opp_score + dynamic_bonus
 
     # =========================
     # PLAYER SCORE (INCREMENTAL)
