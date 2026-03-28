@@ -37,6 +37,9 @@ class MoveGenerator:
         # =========================
         prev_captures = self.board.captures[player]
 
+        if not self.board.is_legal_move(x, y, player):
+            return -1000
+
         self.board.play(x, y, player)
 
         # 1. Immediate win (alignment or capture)
@@ -44,18 +47,14 @@ class MoveGenerator:
             self.board.undo()
             return 10**9
 
-        # 2. Block opponent immediate win
-        if self.board.check_win(-player):
-            score += 900000
-
         # 3. Capture bonus (including winning capture)
         if self.board.captures[player] > prev_captures:
             score += 5000
             if self.board.captures[player] >= 10:
                 score += 10**8
-
         self.board.undo()
-
+        if self._is_blocking_four(x, y, player):
+            score += 700000
         # =========================
         # 📍 POSITIONAL HEURISTICS (your existing logic)
         # =========================
@@ -140,3 +139,18 @@ class MoveGenerator:
             return self.board.black_bits & bit
         else:
             return self.board.white_bits & bit
+
+
+    def _is_blocking_four(self, x, y, player):
+        opponent = -player
+        dangerous = self.board.check_win(opponent)
+        # simulate opponent placing HERE
+        if not self.board.is_legal_move(x, y, opponent):
+            return dangerous
+        self.board.play(x, y, opponent)
+
+        dangerous = self.board.check_win(opponent)
+
+        self.board.undo()
+
+        return dangerous

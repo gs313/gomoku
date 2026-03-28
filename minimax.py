@@ -109,8 +109,13 @@ class MinimaxAI:
             self.tt[key] = val
             return val
 
-        moves = self.move_gen.generate(player)
-        moves = moves[:10]
+        # moves = self.move_gen.generate(player)
+        # limit = 4 if depth >= 6 else 8
+        # moves = moves[:limit]
+        moves = self._get_moves(player, depth)
+
+        if not moves:
+            return self.heuristic.evaluate(root_player)
 
         if not moves:
             return self.heuristic.evaluate(root_player)
@@ -175,3 +180,46 @@ class MinimaxAI:
 
         self.tt[key] = value
         return value
+
+
+    def _get_moves(self, player, depth):
+        # 🚨 1. forced moves first
+        forced = self._get_forced_moves(player)
+        if forced:
+            return forced
+
+        # 📉 2. adaptive pruning
+        moves = self.move_gen.generate(player)
+
+        if depth >= 6:
+            return moves[:4]
+        elif depth >= 4:
+            return moves[:6]
+        else:
+            return moves[:8]
+    def _get_forced_moves(self, player):
+        opponent = -player
+        winning_moves = []
+        blocking_moves = []
+
+        for (x, y) in self.board.get_candidate_moves():
+            if not self.board.is_legal_move(x, y, player):
+                continue
+
+            # 🏆 immediate win
+            if self.board.play(x, y, player):
+                if self.board.check_win(player):
+                    self.board.undo()
+                    return [(x, y)]
+                self.board.undo()
+
+            # 🛑 block opponent win
+            if self.board.play(x, y, opponent):
+                if self.board.check_win(opponent):
+                    blocking_moves.append((x, y))
+                self.board.undo()
+
+        if blocking_moves:
+            return blocking_moves
+
+        return []

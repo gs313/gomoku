@@ -140,7 +140,7 @@ class Heuristic:
             if open_ends == 2:
                 return 50000  # open four
             elif open_ends == 1:
-                return 10000   # closed four
+                return 40000   # closed four
 
         if count == 3:
             if open_ends == 2:
@@ -274,6 +274,42 @@ class Heuristic:
                     break
 
             if count == 4 and open_ends >= 1:
+                return True
+
+        return False
+    def _is_open_three(self, x, y, player):
+        for dx, dy in [(1,0), (0,1), (1,1), (1,-1)]:
+            stones = 1
+            open_ends = 0
+
+            # forward
+            nx, ny = x + dx, y + dy
+            while self._inside(nx, ny):
+                if self._is_player(nx, ny, player):
+                    stones += 1
+                    nx += dx
+                    ny += dy
+                elif self._is_empty(nx, ny):
+                    open_ends += 1
+                    break
+                else:
+                    break
+
+            # backward
+            nx, ny = x - dx, y - dy
+            while self._inside(nx, ny):
+                if self._is_player(nx, ny, player):
+                    stones += 1
+                    nx -= dx
+                    ny -= dy
+                elif self._is_empty(nx, ny):
+                    open_ends += 1
+                    break
+                else:
+                    break
+
+            # 🎯 open three condition
+            if stones == 3 and open_ends == 2:
                 return True
 
         return False
