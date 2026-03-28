@@ -219,9 +219,9 @@ class MinimaxAI:
 
     def _get_moves(self, player, depth):
         #  1. forced moves first
-        # forced = self._get_forced_moves(player)
-        # if forced:
-        #     return forced
+        forced = self._get_forced_moves(player)
+        if forced:
+            return forced
 
         #  2. adaptive pruning
         moves = self.move_gen.generate(player)
@@ -235,29 +235,98 @@ class MinimaxAI:
             return moves[:16]
         else:
             return moves[:20]
+
+    # def _get_forced_moves(self, player):
+    #     opponent = -player
+    #     winning_moves = []
+    #     blocking_moves = []
+
+    #     for (x, y) in self.board.get_candidate_moves():
+    #         if not self.board.is_legal_move(x, y, player):
+    #             continue
+
+    #         # 🏆 immediate win
+    #         if self.board.play(x, y, player):
+    #             if self.board.check_win(player):
+    #                 self.board.undo()
+    #                 return [(x, y)]
+    #             self.board.undo()
+
+    #         # 🛑 block opponent win
+    #         if self.board.play(x, y, opponent):
+    #             if self.board.check_win(opponent, fast=True):
+    #                 blocking_moves.append((x, y))
+    #             self.board.undo()
+
+    #     if blocking_moves:
+    #         return blocking_moves
+
+    #     return []
+
     def _get_forced_moves(self, player):
         opponent = -player
-        winning_moves = []
-        blocking_moves = []
+        moves = self.board.get_candidate_moves()
 
-        for (x, y) in self.board.get_candidate_moves():
+        # 🏆 1. Immediate winning move
+        for (x, y) in moves:
             if not self.board.is_legal_move(x, y, player):
                 continue
 
-            # 🏆 immediate win
-            if self.board.play(x, y, player):
-                if self.board.check_win(player):
-                    self.board.undo()
-                    return [(x, y)]
+            self.board.play(x, y, player)
+            if self.board.check_win(player, fast=True):
                 self.board.undo()
+                return [(x, y)]
+            self.board.undo()
 
-            # 🛑 block opponent win
-            if self.board.play(x, y, opponent):
+        # 🚨 2. Are we currently losing?
+        opponent_winning = False
+
+        for (x, y) in moves:
+            if not self.board.is_legal_move(x, y, opponent):
+                continue
+
+            self.board.play(x, y, opponent)
+            if self.board.check_win(opponent, fast=True):
+                opponent_winning = True
+                self.board.undo()
+                break
+            self.board.undo()
+
+        # 👉 If not losing, no forced moves
+        if not opponent_winning:
+            return []
+
+        # 🛑 3. Find moves that prevent loss (including capture defense)
+        blocking = []
+
+        for (x, y) in moves:
+            if not self.board.is_legal_move(x, y, player):
+                continue
+
+            self.board.play(x, y, player)
+
+            still_loses = False
+
+            # check if opponent STILL has a winning move
+            for (ox, oy) in self.board.get_candidate_moves():
+                if not self.board.is_legal_move(ox, oy, opponent):
+                    continue
+
+                self.board.play(ox, oy, opponent)
+
                 if self.board.check_win(opponent, fast=True):
-                    blocking_moves.append((x, y))
+                    still_loses = True
+                    self.board.undo()
+                    break
+
                 self.board.undo()
 
-        if blocking_moves:
-            return blocking_moves
+            self.board.undo()
+
+            if not still_loses:
+                blocking.append((x, y))
+
+        if blocking:
+            return blocking[:3]
 
         return []
