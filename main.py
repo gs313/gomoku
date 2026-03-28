@@ -96,6 +96,11 @@ def play_turn(ui, game, ai):
             if event.key == pygame.K_ESCAPE:
                 ui.running = False
                 break
+            if event.key == pygame.K_h and not ui.hint:
+                ai_move = ai.find_best_move(game.current_player)
+                if ai_move:
+                    ui.hint_cell = ai_move
+                    ui.hint = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if ui.btn_menu.collidepoint(mouse_pos):
                 game.reset()
@@ -106,6 +111,7 @@ def play_turn(ui, game, ai):
 
             cell = ui.get_cell(pygame.mouse.get_pos())
             if cell:
+                ui.hint = False
                 if game.put(*cell):
                     if ui.mode == "vs":
                         if ui.player == 1:
@@ -181,7 +187,7 @@ if __name__ == "__main__":
                 elif ui.ai_level == "hard":
                     ai = MinimaxAI(game.board, max_depth=12, time_limit=0.5)
                 else:
-                    ai = MinimaxAI(game.board, max_depth=20, time_limit=20)
+                    ai = MinimaxAI(game.board, max_depth=20, time_limit=0.5)
             continue
         if ui.game_mode is None:
             ui.frist_turn = True
@@ -207,7 +213,6 @@ if __name__ == "__main__":
         ui.draw_score(game)
         ui.draw_error()
         ui.draw_error_cell()
-
         mouse_pos = pygame.mouse.get_pos()
         if not ui.winner:
             ui.btn_menu = ui.draw_back_button(mouse_pos)

@@ -36,6 +36,8 @@ class GameUI:
         self.frist_turn = True
         self.turn_is = 1
         self.last_ai_move = None
+        self.hint = False
+        self.hint_cell = None
         
 
         pygame.init()
@@ -81,6 +83,28 @@ class GameUI:
 
             pulse = int(5 * math.sin(pygame.time.get_ticks() * 0.005))
             pygame.draw.circle(self.screen, (255,255,0), (px, py), radius+15 + pulse, 3)
+        
+        if self.hint and self.hint_cell:
+            x, y = self.hint_cell
+
+            px = self.MARGIN + y * self.CELL_SIZE
+            py = self.MARGIN + x * self.CELL_SIZE
+
+            radius = self.CELL_SIZE // 3
+            color = (0,0,0,100) if self.player == 1 else (255,255,255,100)
+            ghost = pygame.Surface((radius*2, radius*2), pygame.SRCALPHA)
+            pygame.draw.circle(ghost, color, (radius, radius), radius)
+
+            self.screen.blit(ghost, (px-radius, py-radius))
+            pulse = int(5 * math.sin(pygame.time.get_ticks() * 0.005))
+
+            pygame.draw.circle(
+                self.screen,
+                (50, 200, 255),
+                (px, py),
+                radius + 10 + pulse,
+                2
+            )
         
 
     def draw_stone(self, px, py, radius, is_black, scale, reflection):
@@ -458,6 +482,8 @@ class GameUI:
         self.frist_turn = True
         self.turn_is = 1
         self.last_ai_move = None
+        self.hint = False
+        self.hint_cell = None
     
 import pygame
 import math
