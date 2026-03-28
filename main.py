@@ -22,7 +22,7 @@ def update_cursor(ui, mouse_pos):
     else:
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-def set_mode(ui):
+def set_mode(ui, ai):
     mouse_pos = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -34,18 +34,52 @@ def set_mode(ui):
                 continue
             if ui.btn_vs.collidepoint(mouse_pos):
                 ui.mode = "vs"
-            elif ui.btn_ai.collidepoint(mouse_pos):
-                ui.mode = "ai"
             elif ui.btn_rules.collidepoint(mouse_pos):
                 ui.show_rules = True
             elif ui.btn_quit.collidepoint(mouse_pos):
                 ui.mode = "quit"
                 ui.running = False
+            if ui.ai_menu_open:
+                for mode, rect in ui.ai_buttons:
+                    if rect.collidepoint(mouse_pos):
+                        ui.mode = "ai"
+                        ui.ai_level = mode.lower()
+                        ui.ai_menu_open = False
+                        print(ui.ai_level)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 if ui.show_rules:
                     ui.show_rules = False
     ui.draw_menu(mouse_pos)
+    if ui.show_rules:
+        ui.draw_rules()
+    pygame.display.flip()
+    update_cursor(ui, mouse_pos)
+
+def set_game(ui, ai):
+    mouse_pos = pygame.mouse.get_pos()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            ui.running = False
+            continue
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if ui.show_rules:
+                ui.show_rules = False
+                continue
+            if ui.btn_mode1.collidepoint(mouse_pos):
+                ui.game_mode = "standard"
+            elif ui.btn_mode2.collidepoint(mouse_pos):
+                ui.game_mode = "renju"
+            elif ui.btn_mode3.collidepoint(mouse_pos):
+                ui.game_mode = "freestyle"
+            elif ui.btn_back.collidepoint(mouse_pos):
+                ui.mode = None
+                break
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                if ui.show_rules:
+                    ui.show_rules = False
+    ui.draw_menu_2(mouse_pos)
     if ui.show_rules:
         ui.draw_rules()
     pygame.display.flip()
@@ -63,42 +97,45 @@ def play_turn(ui, game, ai):
                 ui.running = False
                 break
             elif event.key == pygame.K_r and ui.winner:
-                game = GameState()
-                ui = GameUI(game)
-                ai = MinimaxAI(game.board, max_depth=20)
+                game.board.reset()
                 ui.winner = None
                 ui.mode = None
+                ui.game_mode = None
                 break
             elif event.key == pygame.K_q and ui.winner:
                 ui.running = False
                 break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if ui.btn_menu.collidepoint(mouse_pos):
-                game = GameState()
-                ui = GameUI(game)
-                ai = MinimaxAI(game.board, max_depth=20)
+                game.board.reset()
                 ui.winner = None
                 ui.mode = None
+                ui.game_mode = None
                 break
             if ui.winner or ui.ai_thinking:
                 continue
 
             cell = ui.get_cell(pygame.mouse.get_pos())
-            if cell and game.put(*cell):
-                if ui.mode == "vs":
-                    if ui.player == 1:
-                        ui.player = 2
-                        ui.turn = f"Player {ui.player} turn"
-                        ui.text_colour = (240, 240, 240)
+            if cell:
+                if game.put(*cell):
+                    if ui.mode == "vs":
+                        if ui.player == 1:
+                            ui.player = 2
+                            ui.turn = f"Player {ui.player} turn"
+                            ui.text_colour = (240, 240, 240)
+                        else:
+                            ui.player = 1
+                            ui.turn = f"Player {ui.player} Turn"
+                            ui.text_colour = (70, 130, 255) 
                     else:
-                        ui.player = 1
-                        ui.turn = f"Player {ui.player} Turn"
-                        ui.text_colour = (70, 130, 255)
+                        ui.turn = "AI Turn"
+                        ui.ai_turn = True
+                        ui.text_colour = (255, 80, 80)
+                        ui.just_played = True
                 else:
-                    ui.turn = "AI Turn"
-                    ui.ai_turn = True
-                    ui.text_colour = (255, 80, 80)
-                    ui.just_played = True
+                    ui.error_message = "Invalid move (Double Three or have stone)"
+                    ui.error_cell = cell
+                    ui.error_time = 0.7
 
     return ui, game, ai
 
@@ -127,15 +164,30 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     game = GameState()
     ui = GameUI(game)
-    ai = MinimaxAI(game.board, max_depth=12, time_limit=5)
-
+    ai = MinimaxAI(game.board, max_depth=20,time_limit=1)
+    ui.ai_turn = True
     while ui.running:
+        dt = clock.tick(60) / 1000.0
+        if ui.error_time > 0:
+            ui.error_time -= dt
+            if ui.error_time <= 0:
+                ui.error_message = None
+                ui.error_cell = None
         if ui.mode is None:
-            set_mode(ui)
+            set_mode(ui, ai)
+            if ui.mode == "ai":
+                if ui.ai_level == "easy":
+                    ai = MinimaxAI(game.board, max_depth=2, time_limit=0.2)
+                elif ui.ai_level == "medium":
+                    ai = MinimaxAI(game.board, max_depth=6, time_limit=0.5)
+                elif ui.ai_level == "hard":
+                    ai = MinimaxAI(game.board, max_depth=12, time_limit=1)
+                else:
+                    ai = MinimaxAI(game.board, max_depth=20, time_limit=20)
             continue
-        ui, game, ai = play_turn(ui, game, ai)
-        if ui.ai_turn and ui.running :
-            ai_turn(ui, game, ai)
+        if ui.game_mode is None:
+            set_game(ui, ai)
+            continue
 
         if ui.mode is None:
             continue
@@ -143,8 +195,14 @@ if __name__ == "__main__":
         ui.draw_stones()
         ui.draw_text(ui.turn, 50, ui.text_colour)
         ui.draw_score(game)
+        ui.draw_error()
+        ui.draw_error_cell() 
         mouse_pos = pygame.mouse.get_pos()
         ui.btn_menu = ui.draw_back_button(mouse_pos)
         if ui.running:
             check_win(game, ui)
         pygame.display.flip()
+        if ui.ai_turn and ui.running :
+            ai_turn(ui, game, ai)
+        else:
+            ui, game, ai = play_turn(ui, game, ai)

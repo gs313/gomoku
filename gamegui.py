@@ -26,6 +26,12 @@ class GameUI:
         self.mode = None
         self.show_rules = False
         self.mouse_pos = (0, 0)
+        self.error_message = None
+        self.error_time = 0
+        self.error_cell = None
+        self.ai_menu_open = False
+        self.ai_buttons = []
+        self.game_mode = None
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))
@@ -99,6 +105,23 @@ class GameUI:
         self.screen.blit(shadow, (text_rect.x+2, text_rect.y+2))
         self.screen.blit(text_surf, text_rect)
 
+    def draw_error_cell(self):
+        if not self.error_cell:
+            return
+
+        x, y = self.error_cell
+
+        px = self.MARGIN + y * self.CELL_SIZE
+        py = self.MARGIN + x * self.CELL_SIZE
+
+        # 🔥 วงแดง
+        pygame.draw.circle(self.screen, (255, 80, 80), (px, py), self.CELL_SIZE // 3 + 8, 3)
+
+        # 🔥 หรือ X
+        size = self.CELL_SIZE // 3
+        pygame.draw.line(self.screen, (255,80,80), (px-size, py-size), (px+size, py+size), 3)
+        pygame.draw.line(self.screen, (255,80,80), (px+size, py-size), (px-size, py+size), 3)
+
     def draw_winner(self, text):
         overlay = pygame.Surface((self.WINDOW_SIZE, self.WINDOW_SIZE), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 210))
@@ -143,6 +166,61 @@ class GameUI:
         self.btn_ai   = self.draw_button("PLAYER vs AI", start_y + spacing, mouse_pos)
         self.btn_rules = self.draw_button("RULES", start_y + spacing * 2, mouse_pos)
         self.btn_quit = self.draw_button("QUIT", start_y + spacing * 3, mouse_pos)
+        if self.btn_ai.collidepoint(mouse_pos):
+            self.ai_menu_open = True
+        if self.btn_vs.collidepoint(mouse_pos) or self.btn_rules.collidepoint(mouse_pos) or self.btn_quit.collidepoint(mouse_pos):
+            self.ai_menu_open = False
+        if self.ai_menu_open:
+            self.draw_ai_menu(start_y + spacing - 35, mouse_pos)
+
+    def draw_menu_2(self, mouse_pos):
+        self.draw_board()
+        overlay = pygame.Surface((self.WINDOW_SIZE, self.WINDOW_SIZE), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 80))
+        self.screen.blit(overlay, (0, 0))
+
+        center_x = self.WINDOW_SIZE // 2
+        center_y = self.WINDOW_SIZE // 2
+
+        font_big = pygame.font.SysFont(None, 100)
+        title = font_big.render("GOMOKU", True, (240,240,240))
+        rect = title.get_rect(center=(center_x, center_y - 200))
+
+        shadow = font_big.render("GOMOKU", True, (0,0,0))
+        self.screen.blit(shadow, (rect.x+4, rect.y+4))
+        self.screen.blit(title, rect)
+
+        spacing = 120
+        start_y = center_y - 40
+
+        self.btn_mode1   = self.draw_button("MODE1", start_y, mouse_pos)
+        self.btn_mode2   = self.draw_button("MODE2", start_y + spacing, mouse_pos)
+        self.btn_mode3 = self.draw_button("MODE3", start_y + spacing * 2, mouse_pos)
+        self.btn_back = self.draw_button("BACK", start_y + spacing * 3, mouse_pos)
+
+
+    def draw_ai_menu(self, ai_y, mouse_pos):
+        options = ["EASY", "MEDIUM", "HARD", "EXPERT"]
+        self.ai_buttons = []
+
+        center_x = self.WINDOW_SIZE // 2  + (self.WINDOW_SIZE // 6) + 10
+        spacing = 70
+
+        for i, opt in enumerate(options):
+            y = ai_y + i * spacing
+            rect = pygame.Rect(center_x, y, 180, 60)
+
+            hover = rect.collidepoint(mouse_pos)
+
+            color = (120,120,150) if hover else (60,60,80)
+            pygame.draw.rect(self.screen, color, rect, border_radius=10)
+
+            font = pygame.font.SysFont(None, 32)
+            text = font.render(opt, True, (255,255,255))
+            text_rect = text.get_rect(center=rect.center)
+            self.screen.blit(text, text_rect)
+
+            self.ai_buttons.append((opt, rect))
 
     def draw_back_button(self, mouse_pos):
         return self.draw_button("BACK TO MENU", self.WINDOW_SIZE - 35 , mouse_pos, 24, 50, 200)
@@ -165,7 +243,7 @@ class GameUI:
 
         box = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 
-        if hover:
+        if hover or (self.ai_menu_open and text == "PLAYER vs AI"):
             box_rect.inflate_ip(10, 6)
             bg_color = (120, 120, 150, 220)
         else:
@@ -174,7 +252,7 @@ class GameUI:
         pygame.draw.rect(box, bg_color, box.get_rect(), border_radius=14)
 
         # border
-        border_color = (255,255,255) if hover else (180,180,180)
+        border_color = (255,255,255) if hover or (self.ai_menu_open and text == "PLAYER vs AI") else (180,180,180)
         pygame.draw.rect(box, border_color, box.get_rect(), 2, border_radius=14)
 
         self.screen.blit(box, box_rect.topleft)
@@ -224,6 +302,28 @@ class GameUI:
             self.screen.blit(text, (box.x + 40, y))
             y += 40
     
+    def draw_error(self):
+        if not self.error_message or not self.error_cell:
+            return
+
+        font = pygame.font.SysFont(None, 28)
+
+        x, y = self.error_cell
+
+        px = self.MARGIN + y * self.CELL_SIZE
+        py = self.MARGIN + x * self.CELL_SIZE
+
+        text = font.render(self.error_message, True, (255, 80, 80))
+
+        rect = text.get_rect(center=(px, py + self.CELL_SIZE // 2 + 20))
+
+        if rect.bottom > self.WINDOW_SIZE:
+            rect.top = py - self.CELL_SIZE // 2 - 20
+        box = rect.inflate(12, 8)
+        pygame.draw.rect(self.screen, (30,30,30), box, border_radius=6)
+
+        self.screen.blit(text, rect)
+
     def draw_score(self, game):
         black_score, white_score = game.board.get_capture_counts()
 
