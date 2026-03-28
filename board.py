@@ -327,19 +327,73 @@ class Board:
             return [(SIZE//2, SIZE//2)]
 
         return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
+# ========================
+#   Check Win
+# =========================
 
+    def _can_break_five_by_capture(self, player):
+        opponent = -player
+
+        # try all opponent moves
+        for (x, y) in self.get_candidate_moves():
+            if not self.is_legal_move(x, y, opponent):
+                continue
+
+            if not self.play(x, y, opponent):
+                continue
+
+            # if this capture breaks the 5
+            still_five = self._check_from(*self.last_move, player)
+
+            captured = len(self.moves[-1][3]) > 0
+
+            self.undo()
+
+            # capture happened AND breaks the line
+            if captured and not still_five:
+                return True
+
+        return False
     def check_win(self, player):
+        opponent = -player
+
         # 🏆 Capture win
         if self.captures[player] >= 5:
             return True
 
-        # 🏆 Line win (only check last move)
+        # 🏆 Line win (needs validation)
         if self.last_move:
             x, y = self.last_move
+
             if self._is_player(x, y, player):
-                return self._check_from(x, y, player)
+                if self._check_from(x, y, player):
+
+                    # 🚨 check if opponent can break it
+                    if self._can_break_five_by_capture(player):
+
+                        # 💀 if opponent already has 4 captures → they win
+                        if self.captures[opponent] >= 4:
+                            return False  # player does NOT win
+
+                        # otherwise: not a valid win yet
+                        return False
+
+                    # ✅ unbreakable → real win
+                    return True
 
         return False
+    # def check_win(self, player):
+    #     # 🏆 Capture win
+    #     if self.captures[player] >= 5:
+    #         return True
+
+    #     # 🏆 Line win (only check last move)
+    #     if self.last_move:
+    #         x, y = self.last_move
+    #         if self._is_player(x, y, player):
+    #             return self._check_from(x, y, player)
+
+    #     return False
 
     def _check_from(self, x, y, player):
         directions = [(1,0), (0,1), (1,1), (1,-1)]
