@@ -171,7 +171,7 @@ if __name__ == "__main__":
             set_mode(ui, ai)
             ui.turn_is = 1
             if ui.mode == "ai":
-                ui.ai_turn = True
+                ui.ai_turn = False
                 ui.turn = "AI Turn"
                 ui.text_colour = (255, 80, 80)
                 if ui.ai_level == "easy":
