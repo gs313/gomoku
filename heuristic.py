@@ -27,12 +27,12 @@ class Heuristic:
         my_score = self._evaluate_player(player)
         opp_score = self._evaluate_player(opponent)
 
-        # optional: only enable double-threat later if stable
-        threat_bonus = 0
-        if len(self.board.moves) > 6:
-            threat_bonus = self._double_threat_bonus(player)
+        # optional: only enable double-threat later if we decide to do additional rule
+        # # threat_bonus = 0
+        # if len(self.board.moves) > 6:
+        #     threat_bonus = self._double_threat_bonus(player)
 
-        return my_score - 1.2 * opp_score + threat_bonus
+        return my_score - 1.2 * opp_score
 
     # =========================
     # PLAYER SCORE (INCREMENTAL)
@@ -64,12 +64,12 @@ class Heuristic:
         # capture bonus
         c = self.board.captures[player]
 
-        if c >= 8:
+        if c >= 3:
             score += 20000   # super dangerous
-        elif c >= 6:
+        elif c >= 2:
             score += 5000
         else:
-            score += c * 800
+            score += c * 1600
         # score += self.board.captures[player] * 800
 
         return score
@@ -140,70 +140,70 @@ class Heuristic:
     # DOUBLE THREAT BONUS
     # =========================
 
-    def _double_threat_bonus(self, player):
-        bonus = 0
+    # def _double_threat_bonus(self, player):
+    #     bonus = 0
 
-        # limit to avoid slowdown
-        moves = self.board.get_candidate_moves()[:8]
+    #     # limit to avoid slowdown
+    #     moves = self.board.get_candidate_moves()[:8]
 
-        for (x, y) in moves:
-            if self.board.has_stone(x, y):
-                continue
-            if not self.board.is_legal_move(x, y, player):
-                continue
+    #     for (x, y) in moves:
+    #         if self.board.has_stone(x, y):
+    #             continue
+    #         if not self.board.is_legal_move(x, y, player):
+    #             continue
 
-            self.board.play(x, y, player)
+    #         self.board.play(x, y, player)
 
-            threes = self._count_open_threes(x, y, player)
+    #         threes = self._count_open_threes(x, y, player)
 
-            if threes >= 2:
-                bonus += 5000
+    #         if threes >= 2:
+    #             bonus += 5000
 
-            if self.board.captures[player] >= 10:
-                self.board.undo()
-                return 10**9  # instant win move
+    #         if self.board.captures[player] >= 10:
+    #             self.board.undo()
+    #             return 10**9  # instant win move
 
-            self.board.undo()
+    #         self.board.undo()
 
-        return bonus
+    #     return bonus
 
-    def _count_open_threes(self, x, y, player):
-        count = 0
+    # def _count_open_threes(self, x, y, player):
+    #     count = 0
 
-        for dx, dy in [(1,0), (0,1), (1,1), (1,-1)]:
-            stones = 1
-            open_ends = 0
+    #     for dx, dy in [(1,0), (0,1), (1,1), (1,-1)]:
+    #         stones = 1
+    #         open_ends = 0
 
-            # forward
-            nx, ny = x + dx, y + dy
-            while self._inside(nx, ny):
-                if self._is_player(nx, ny, player):
-                    stones += 1
-                    nx += dx
-                    ny += dy
-                elif self._is_empty(nx, ny):
-                    open_ends += 1
-                    break
-                else:
-                    break
+    #         # forward
+    #         nx, ny = x + dx, y + dy
+    #         while self._inside(nx, ny):
+    #             if self._is_player(nx, ny, player):
+    #                 stones += 1
+    #                 nx += dx
+    #                 ny += dy
+    #             elif self._is_empty(nx, ny):
+    #                 open_ends += 1
+    #                 break
+    #             else:
+    #                 break
 
-            # backward
-            nx, ny = x - dx, y - dy
-            while self._inside(nx, ny):
-                if self._is_player(nx, ny, player):
-                    stones += 1
-                    nx -= dx
-                    ny -= dy
-                elif self._is_empty(nx, ny):
-                    open_ends += 1
-                    break
-                else:
-                    break
+    #         # backward
+    #         nx, ny = x - dx, y - dy
+    #         while self._inside(nx, ny):
+    #             if self._is_player(nx, ny, player):
+    #                 stones += 1
+    #                 nx -= dx
+    #                 ny -= dy
+    #             elif self._is_empty(nx, ny):
+    #                 open_ends += 1
+    #                 break
+    #             else:
+    #                 break
 
-            if stones == 3 and open_ends == 2:
-                count += 1
+    #         if stones == 3 and open_ends == 2:
+    #             count += 1
 
-        return count
+    #     return count
 
     # =========================
     # HELPERS
