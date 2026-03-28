@@ -37,3 +37,6 @@ class GameState:
     def undo(self):
         self.board.undo()
         self.current_player *= -1
+    def reset(self):
+        self.board.reset()
+        self.current_player = BLACK

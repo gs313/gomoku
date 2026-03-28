@@ -8,12 +8,12 @@ def check_win(game, ui):
     if game.board.check_win(1):
         ui.ai_turn = False
         ui.winner = "Black Wins!"
-        game.board.reset()
+        game.reset()
         ui.mode = None
     if game.board.check_win(-1):
         ui.ai_turn = False
         ui.winner = "White Wins!"
-        game.board.reset()
+        game.reset()
         ui.mode = None
 
 def update_cursor(ui, mouse_pos):
@@ -44,7 +44,7 @@ def set_mode(ui, ai):
                 ui.running = False
             if ui.winner:
                 if ui.btn_restart.collidepoint(mouse_pos):
-                    game.board.reset()
+                    game.reset()
                     ui.winner = None
                     ui.game_mode = None
                     break
@@ -116,7 +116,7 @@ def play_turn(ui, game, ai):
                 break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if ui.btn_menu.collidepoint(mouse_pos):
-                game.board.reset()
+                game.reset()
                 ui.winner = None
                 ui.mode = None
                 ui.game_mode = None
@@ -193,7 +193,7 @@ if __name__ == "__main__":
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if ui.btn_restart.collidepoint(mouse_pos):
-                        game.board.reset()
+                        game.reset()
                         ui.winner = None
                         ui.game_mode = None
                         ui.mode = None
