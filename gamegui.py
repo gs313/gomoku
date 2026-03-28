@@ -32,6 +32,8 @@ class GameUI:
         self.ai_menu_open = False
         self.ai_buttons = []
         self.game_mode = None
+        self.frist_turn = True
+        self.turn_is = 1
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))
@@ -92,17 +94,31 @@ class GameUI:
 
     def draw_text(self, text, y, color=(0,0,0)):
 
+        center_x = self.WINDOW_SIZE // 2
+
+        turn_text = f"Turn {(self.turn_is - 1) // 2 + 1}"
+        turn_surf = self.font_large.render(turn_text, True, (255, 215, 0))
+
+        BOX_W = 240
+        BOX_H = 70
+
+        turn_box = pygame.Rect(0, 0, BOX_W, BOX_H)
+        turn_box.center = (center_x - 130, y)
+        turn_rect = turn_surf.get_rect(center=turn_box.center)
+        pygame.draw.rect(self.screen, (40,40,50), turn_box, border_radius=8)
+        pygame.draw.rect(self.screen, (200,200,200), turn_box, 2, border_radius=8)
+
+        self.screen.blit(turn_surf, turn_rect)
+
+        # ===== TEXT =====
         text_surf = self.font_large.render(text, True, color)
-        text_rect = text_surf.get_rect(center=(self.WINDOW_SIZE//2, y))
 
-        padding = 20
-        box_rect = text_rect.inflate(padding*2, padding)
+        text_box = pygame.Rect(0, 0, BOX_W, BOX_H)
+        text_box.center = (center_x + 130, y)
+        text_rect = text_surf.get_rect(center=text_box.center)
+        pygame.draw.rect(self.screen, (30,30,30), text_box, border_radius=10)
+        pygame.draw.rect(self.screen, (200,200,200), text_box, 2, border_radius=10)
 
-        pygame.draw.rect(self.screen, (30, 30, 30), box_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (200, 200, 200), box_rect, 2, border_radius=10)
-
-        shadow = self.font_large.render(text, True, (0, 0, 0))
-        self.screen.blit(shadow, (text_rect.x+2, text_rect.y+2))
         self.screen.blit(text_surf, text_rect)
 
     def draw_error_cell(self):
@@ -122,25 +138,44 @@ class GameUI:
         pygame.draw.line(self.screen, (255,80,80), (px-size, py-size), (px+size, py+size), 3)
         pygame.draw.line(self.screen, (255,80,80), (px+size, py-size), (px-size, py+size), 3)
 
-    def draw_winner(self, text):
+    def draw_winner(self, text, mouse_pos):
+        # ===== DARK OVERLAY =====
         overlay = pygame.Surface((self.WINDOW_SIZE, self.WINDOW_SIZE), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 210))
         self.screen.blit(overlay, (0, 0))
 
+        center_x = self.WINDOW_SIZE // 2
+        center_y = self.WINDOW_SIZE // 2
+
+        # ===== TITLE =====
         font = pygame.font.SysFont(None, 80)
         text_surf = font.render(text, True, (0, 255, 255))
-        rect = text_surf.get_rect(center=(self.WINDOW_SIZE//2, self.WINDOW_SIZE//2))
+        rect = text_surf.get_rect(center=(center_x, center_y - 120))
 
-        shadow = font.render(text, True, (200,200,200))
+        shadow = font.render(text, True, (0,0,0))
         self.screen.blit(shadow, (rect.x+3, rect.y+3))
+        self.screen.blit(text_surf, rect)
 
-        small = pygame.font.SysFont(None, 36)
-        hint = small.render("Press R to Restart", True, (200,200,200))
-        hint_rect = hint.get_rect(center=(self.WINDOW_SIZE//2, self.WINDOW_SIZE//2 + 80))
-        self.screen.blit(hint, hint_rect)
-        hint2 = small.render("Press Q to Quit", True, (200,200,200))
-        hint_rect2 = hint2.get_rect(center=(self.WINDOW_SIZE//2, self.WINDOW_SIZE//2 + 150))
-        self.screen.blit(hint2, hint_rect2)
+        # ===== BUTTONS =====
+        spacing = 100
+
+        self.btn_restart = self.draw_button(
+            "RESTART",
+            center_y,
+            mouse_pos,
+            fontsize=40,
+            width=260,
+            height=70
+        )
+
+        self.btn_quit = self.draw_button(
+            "QUIT",
+            center_y + spacing,
+            mouse_pos,
+            fontsize=40,
+            width=260,
+            height=70
+        )
 
     def draw_menu(self, mouse_pos):
         self.draw_board()

@@ -5,14 +5,19 @@ from minimax import MinimaxAI
 
 
 def check_win(game, ui):
+    mouse_pos = pygame.mouse.get_pos()
     if game.board.check_win(1):
         ui.ai_turn = False
         ui.winner = "Black Wins!"
-        ui.draw_winner(ui.winner)
+        ui.draw_winner(ui.winner, mouse_pos)
+        ui.mode = None
+        pygame.display.flip()
     if game.board.check_win(-1):
         ui.ai_turn = False
         ui.winner = "White Wins!"
-        ui.draw_winner(ui.winner)
+        ui.draw_winner(ui.winner, mouse_pos)
+        ui.mode = None
+        pygame.display.flip()
 
 def update_cursor(ui, mouse_pos):
     if (ui.btn_vs.collidepoint(mouse_pos) or
@@ -34,11 +39,18 @@ def set_mode(ui, ai):
                 continue
             if ui.btn_vs.collidepoint(mouse_pos):
                 ui.mode = "vs"
+                ui.ai_turn = False
             elif ui.btn_rules.collidepoint(mouse_pos):
                 ui.show_rules = True
             elif ui.btn_quit.collidepoint(mouse_pos):
                 ui.mode = "quit"
                 ui.running = False
+            if ui.winner:
+                if ui.btn_restart.collidepoint(mouse_pos):
+                    game.board.reset()
+                    ui.winner = None
+                    ui.game_mode = None
+                    break
             if ui.ai_menu_open:
                 for mode, rect in ui.ai_buttons:
                     if rect.collidepoint(mouse_pos):
@@ -50,11 +62,12 @@ def set_mode(ui, ai):
             if event.key == pygame.K_q:
                 if ui.show_rules:
                     ui.show_rules = False
-    ui.draw_menu(mouse_pos)
-    if ui.show_rules:
-        ui.draw_rules()
-    pygame.display.flip()
-    update_cursor(ui, mouse_pos)
+    if not ui.winner:
+        ui.draw_menu(mouse_pos)
+        if ui.show_rules:
+            ui.draw_rules()
+        pygame.display.flip()
+        update_cursor(ui, mouse_pos)
 
 def set_game(ui, ai):
     mouse_pos = pygame.mouse.get_pos()
@@ -123,15 +136,18 @@ def play_turn(ui, game, ai):
                             ui.player = 2
                             ui.turn = f"Player {ui.player} turn"
                             ui.text_colour = (240, 240, 240)
+                            ui.turn_is = ui.turn_is + 1
                         else:
                             ui.player = 1
                             ui.turn = f"Player {ui.player} Turn"
-                            ui.text_colour = (70, 130, 255) 
+                            ui.text_colour = (70, 130, 255)
+                            ui.turn_is = ui.turn_is + 1
                     else:
                         ui.turn = "AI Turn"
                         ui.ai_turn = True
                         ui.text_colour = (255, 80, 80)
                         ui.just_played = True
+                        ui.turn_is = ui.turn_is + 1
                 else:
                     ui.error_message = "Invalid move (Double Three or have stone)"
                     ui.error_cell = cell
@@ -153,6 +169,7 @@ def ai_turn(ui, game, ai):
             ui.ai_thinking = False
             ui.turn = "Your Turn"
             ui.text_colour = (70, 130, 255)
+            ui.turn_is = ui.turn_is + 1
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             pygame.event.clear(pygame.MOUSEBUTTONDOWN)
 
@@ -165,7 +182,6 @@ if __name__ == "__main__":
     game = GameState()
     ui = GameUI(game)
     ai = MinimaxAI(game.board, max_depth=20,time_limit=1)
-    ui.ai_turn = True
     while ui.running:
         dt = clock.tick(60) / 1000.0
         if ui.error_time > 0:
@@ -175,7 +191,11 @@ if __name__ == "__main__":
                 ui.error_cell = None
         if ui.mode is None:
             set_mode(ui, ai)
+            ui.turn_is = 1
             if ui.mode == "ai":
+                ui.ai_turn = True
+                ui.turn = "AI Turn"
+                ui.text_colour = (255, 80, 80)
                 if ui.ai_level == "easy":
                     ai = MinimaxAI(game.board, max_depth=2, time_limit=0.2)
                 elif ui.ai_level == "medium":
@@ -186,23 +206,34 @@ if __name__ == "__main__":
                     ai = MinimaxAI(game.board, max_depth=20, time_limit=20)
             continue
         if ui.game_mode is None:
+            ui.frist_turn = True
             set_game(ui, ai)
             continue
 
         if ui.mode is None:
             continue
+        if ui.ai_turn and ui.running:
+            if ui.frist_turn:
+                ui.frist_turn = False
+            else:
+                ai_turn(ui, game, ai)
+        else:
+            if ui.frist_turn:
+                ui.frist_turn = False
+            ui, game, ai = play_turn(ui, game, ai)
+            
+        
         ui.draw_board()
         ui.draw_stones()
         ui.draw_text(ui.turn, 50, ui.text_colour)
         ui.draw_score(game)
         ui.draw_error()
-        ui.draw_error_cell() 
-        mouse_pos = pygame.mouse.get_pos()
-        ui.btn_menu = ui.draw_back_button(mouse_pos)
+        ui.draw_error_cell()
         if ui.running:
             check_win(game, ui)
+        mouse_pos = pygame.mouse.get_pos()
+        if not ui.winner:
+            ui.btn_menu = ui.draw_back_button(mouse_pos)
         pygame.display.flip()
-        if ui.ai_turn and ui.running :
-            ai_turn(ui, game, ai)
-        else:
-            ui, game, ai = play_turn(ui, game, ai)
+        
+        
