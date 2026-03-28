@@ -145,9 +145,11 @@ class MoveGenerator:
         opponent = -player
         dangerous = self.board.check_win(opponent, fast=True)
         # simulate opponent placing HERE
-        if not self.board.is_legal_move(x, y, opponent):
+        # if not self.board.is_legal_move(x, y, opponent):
+        #     return dangerous
+        if not self.board.play(x, y, player):
             return dangerous
-        self.board.play(x, y, opponent)
+        # self.board.play(x, y, opponent)
 
         dangerous = self.board.check_win(opponent, fast=True)
 

@@ -18,6 +18,8 @@ class MinimaxAI:
         self.heuristic = Heuristic(board)
         self.move_gen = MoveGenerator(board)
 
+        self.killer_moves = {}
+
         self.tt = {}
 
     # =========================
@@ -78,7 +80,7 @@ class MinimaxAI:
 
         # moves = self.move_gen.generate(player)
         # print(len(moves))
-        moves = self._get_moves(player, depth)
+        moves = self._get_moves(player, depth)[:5]
         # moves = moves[:20]
 
         #  move ordering from previous iteration
@@ -91,11 +93,11 @@ class MinimaxAI:
                 break
             x, y = move
 
-            # if not self.board.play(x, y, player):
-            #     continue
-            if not self.board.is_legal_move(x, y, player):
+            if not self.board.play(x, y, player):
                 continue
-            self.board.play(x, y, player)
+            # if not self.board.is_legal_move(x, y, player):
+            #     continue
+            # self.board.play(x, y, player)
             score = self._alphabeta(
                 depth - 1,
                 -INF,
@@ -146,6 +148,10 @@ class MinimaxAI:
         # limit = 4 if depth >= 6 else 8
         # moves = moves[:limit]
         moves = self._get_moves(player, depth)
+        killer = self.killer_moves.get(depth)
+        if killer in moves:
+            moves.remove(killer)
+            moves.insert(0, killer)
 
         if not moves:
             return self.heuristic.evaluate(root_player)
@@ -161,11 +167,11 @@ class MinimaxAI:
                     break
                 x, y = move
 
-                # if not self.board.play(x, y, player):
-                #     continue
-                if not self.board.is_legal_move(x, y, player):
+                if not self.board.play(x, y, player):
                     continue
-                self.board.play(x, y, player)
+                # if not self.board.is_legal_move(x, y, player):
+                #     continue
+                # self.board.play(x, y, player)
 
                 score = self._alphabeta(
                     depth - 1,
@@ -182,6 +188,7 @@ class MinimaxAI:
                 alpha = max(alpha, value)
 
                 if alpha >= beta:
+                    self.killer_moves[depth] = move
                     break
 
         else:
@@ -192,11 +199,11 @@ class MinimaxAI:
                     break
                 x, y = move
 
-                # if not self.board.play(x, y, player):
-                #     continue
-                if not self.board.is_legal_move(x, y, player):
+                if not self.board.play(x, y, player):
                     continue
-                self.board.play(x, y, player)
+                # if not self.board.is_legal_move(x, y, player):
+                #     continue
+                # self.board.play(x, y, player)
 
                 score = self._alphabeta(
                     depth - 1,
@@ -213,6 +220,7 @@ class MinimaxAI:
                 beta = min(beta, value)
 
                 if beta <= alpha:
+                    self.killer_moves[depth] = move
                     break
 
         self.tt[key] = value
@@ -229,15 +237,16 @@ class MinimaxAI:
         moves = self.move_gen.generate(player)
         # print(len(moves))
         # return moves
-
-        if depth >= 8:
-            return moves[:2]
+        # if depth >= 10:
+        #     return moves[:2]
+        # elif depth >= 8:
+        #     return moves[:3]
         if depth >= 6:
-            return moves[:4]
+            return moves[:2]
         elif depth >= 4:
-            return moves[:6]
+            return moves[:4]
         else:
-            return moves[:8]
+            return moves[:6]
 
     # def _get_forced_moves(self, player):
     #     opponent = -player
@@ -272,10 +281,12 @@ class MinimaxAI:
 
         # 🏆 1. Immediate winning move
         for (x, y) in moves:
-            if not self.board.is_legal_move(x, y, player):
+            if not self.board.play(x, y, player):
                 continue
+            # if not self.board.is_legal_move(x, y, player):
+            #     continue
 
-            self.board.play(x, y, player)
+            # self.board.play(x, y, player)
             if self.board.check_win(player, fast=True):
                 self.board.undo()
                 return [(x, y)]
@@ -285,10 +296,13 @@ class MinimaxAI:
         opponent_winning = False
 
         for (x, y) in moves:
-            if not self.board.is_legal_move(x, y, opponent):
+            if not self.board.play(x, y, player):
                 continue
 
-            self.board.play(x, y, opponent)
+            # if not self.board.is_legal_move(x, y, opponent):
+            #     continue
+
+            # self.board.play(x, y, opponent)
             if self.board.check_win(opponent, fast=True):
                 opponent_winning = True
                 self.board.undo()
@@ -303,19 +317,23 @@ class MinimaxAI:
         blocking = []
 
         for (x, y) in moves:
-            if not self.board.is_legal_move(x, y, player):
+            if not self.board.play(x, y, player):
                 continue
+            # if not self.board.is_legal_move(x, y, player):
+            #     continue
 
-            self.board.play(x, y, player)
+            # self.board.play(x, y, player)
 
             still_loses = False
 
             # check if opponent STILL has a winning move
             for (ox, oy) in self.board.get_candidate_moves():
-                if not self.board.is_legal_move(ox, oy, opponent):
+                if not self.board.play(x, y, player):
                     continue
+                # if not self.board.is_legal_move(ox, oy, opponent):
+                #     continue
 
-                self.board.play(ox, oy, opponent)
+                # self.board.play(ox, oy, opponent)
 
                 if self.board.check_win(opponent, fast=True):
                     still_loses = True
