@@ -1,6 +1,6 @@
 from board import BLACK, WHITE
 
-MAX_MOVES = 12
+MAX_MOVES = 50
 class MoveGenerator:
     def __init__(self, board):
         self.board = board
