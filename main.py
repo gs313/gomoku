@@ -8,13 +8,9 @@ def check_win(game, ui):
     if game.board.check_win(1):
         ui.ai_turn = False
         ui.winner = "Black Wins!"
-        game.reset()
-        ui.mode = None
     if game.board.check_win(-1):
         ui.ai_turn = False
         ui.winner = "White Wins!"
-        game.reset()
-        ui.mode = None
 
 def update_cursor(ui, mouse_pos):
     if (ui.btn_vs.collidepoint(mouse_pos) or
@@ -42,12 +38,6 @@ def set_mode(ui, ai):
             elif ui.btn_quit.collidepoint(mouse_pos):
                 ui.mode = "quit"
                 ui.running = False
-            if ui.winner:
-                if ui.btn_restart.collidepoint(mouse_pos):
-                    game.reset()
-                    ui.winner = None
-                    ui.game_mode = None
-                    break
             if ui.ai_menu_open:
                 for mode, rect in ui.ai_buttons:
                     if rect.collidepoint(mouse_pos):
@@ -106,20 +96,10 @@ def play_turn(ui, game, ai):
             if event.key == pygame.K_ESCAPE:
                 ui.running = False
                 break
-            elif event.key == pygame.K_r and ui.winner:
-                ui.winner = None
-                ui.mode = None
-                ui.game_mode = None
-                break
-            elif event.key == pygame.K_q and ui.winner:
-                ui.running = False
-                break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if ui.btn_menu.collidepoint(mouse_pos):
                 game.reset()
-                ui.winner = None
-                ui.mode = None
-                ui.game_mode = None
+                ui.reset()
                 break
             if ui.winner or ui.ai_thinking:
                 continue
@@ -160,6 +140,7 @@ def ai_turn(ui, game, ai):
         ai_move = ai.find_best_move(game.current_player)
         if ai_move:
             game.put(*ai_move)
+            ui.last_ai_move = ai_move
             print("AI:", ai_move)
             ui.ai_turn = False
             ui.ai_thinking = False
@@ -185,24 +166,6 @@ if __name__ == "__main__":
             if ui.error_time <= 0:
                 ui.error_message = None
                 ui.error_cell = None
-        if ui.winner:
-            mouse_pos = pygame.mouse.get_pos()
-            ui.draw_board()
-            ui.draw_winner(ui.winner, mouse_pos)
-            pygame.display.flip()
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if ui.btn_restart.collidepoint(mouse_pos):
-                        game.reset()
-                        ui.winner = None
-                        ui.game_mode = None
-                        ui.mode = None
-                        break
-                    elif ui.btn_quit.collidepoint(mouse_pos):
-                        ui.winner = None
-                        ui.mode = "quit"
-                        ui.game_mode = "quit"
-                        ui.running = False
             continue
         if ui.mode is None:
             set_mode(ui, ai)
@@ -227,12 +190,12 @@ if __name__ == "__main__":
 
         if ui.mode is None:
             continue
-        if ui.ai_turn and ui.running:
+        if ui.ai_turn and ui.running and not ui.winner:
             if ui.frist_turn:
                 ui.frist_turn = False
             else:
                 ai_turn(ui, game, ai)
-        else:
+        elif not ui.winner:
             if ui.frist_turn:
                 ui.frist_turn = False
             ui, game, ai = play_turn(ui, game, ai)
@@ -244,11 +207,22 @@ if __name__ == "__main__":
         ui.draw_score(game)
         ui.draw_error()
         ui.draw_error_cell()
-        if ui.running:
-            check_win(game, ui)
+
         mouse_pos = pygame.mouse.get_pos()
         if not ui.winner:
             ui.btn_menu = ui.draw_back_button(mouse_pos)
+            check_win(game, ui)
+        else:
+            ui.draw_winner(ui.winner, mouse_pos)
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if ui.btn_restart.collidepoint(mouse_pos):
+                        game.reset()
+                        ui.reset()
+                        break
+                    elif ui.btn_quit.collidepoint(mouse_pos):
+                        ui.winner = None
+                        ui.running = False
         pygame.display.flip()
         
         

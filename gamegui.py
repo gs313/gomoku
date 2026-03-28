@@ -1,4 +1,5 @@
 import pygame
+import math
 
 class GameUI:
     def __init__(self, game):
@@ -34,6 +35,8 @@ class GameUI:
         self.game_mode = None
         self.frist_turn = True
         self.turn_is = 1
+        self.last_ai_move = None
+        
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOW_SIZE, self.WINDOW_SIZE))
@@ -70,6 +73,16 @@ class GameUI:
                     is_black = bool(self.game.black & bit)
                     self.draw_stone(px, py, radius, is_black, 1.0, 1.0)
 
+        if self.last_ai_move and not self.ai_turn:
+            x, y = self.last_ai_move
+
+            px = self.MARGIN + y * self.CELL_SIZE
+            py = self.MARGIN + x * self.CELL_SIZE
+
+            pulse = int(5 * math.sin(pygame.time.get_ticks() * 0.005))
+            pygame.draw.circle(self.screen, (255,255,0), (px, py), radius+15 + pulse, 3)
+        
+
     def draw_stone(self, px, py, radius, is_black, scale, reflection):
         r = int(radius * scale)
 
@@ -82,7 +95,6 @@ class GameUI:
 
         stone_scaled = pygame.transform.smoothscale(stone, (r*2, r*2))
         self.screen.blit(stone_scaled, (px - r, py - r))
-
         if reflection < 1.0:
             overlay = pygame.Surface((r*2, r*2), pygame.SRCALPHA)
             pygame.draw.ellipse(
@@ -91,6 +103,7 @@ class GameUI:
                 (r//4, r//6, r, r//2)
             )
             self.screen.blit(overlay, (px - r, py - r))
+        
 
     def draw_text(self, text, y, color=(0,0,0)):
 
@@ -428,6 +441,23 @@ class GameUI:
             "is_black": is_black,
             "time": 0.0
         })
+    def reset(self):
+        self.animations.clear()
+        self.turn = "Your Turn"
+        self.text_colour = (70, 130, 255)
+        self.ai_turn = False
+        self.just_played = False
+        self.winner = None
+        self.mode = None
+        self.show_rules = False
+        self.error_message = None
+        self.error_time = 0
+        self.error_cell = None
+        self.ai_menu_open = False
+        self.game_mode = None
+        self.frist_turn = True
+        self.turn_is = 1
+        self.last_ai_move = None
     
 import pygame
 import math
