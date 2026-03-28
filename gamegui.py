@@ -160,7 +160,7 @@ class GameUI:
         spacing = 100
 
         self.btn_restart = self.draw_button(
-            "RESTART",
+            "BACK TO MENU",
             center_y,
             mouse_pos,
             fontsize=40,

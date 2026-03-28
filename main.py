@@ -5,19 +5,16 @@ from minimax import MinimaxAI
 
 
 def check_win(game, ui):
-    mouse_pos = pygame.mouse.get_pos()
     if game.board.check_win(1):
         ui.ai_turn = False
         ui.winner = "Black Wins!"
-        ui.draw_winner(ui.winner, mouse_pos)
+        game.board.reset()
         ui.mode = None
-        pygame.display.flip()
     if game.board.check_win(-1):
         ui.ai_turn = False
         ui.winner = "White Wins!"
-        ui.draw_winner(ui.winner, mouse_pos)
+        game.board.reset()
         ui.mode = None
-        pygame.display.flip()
 
 def update_cursor(ui, mouse_pos):
     if (ui.btn_vs.collidepoint(mouse_pos) or
@@ -62,7 +59,7 @@ def set_mode(ui, ai):
             if event.key == pygame.K_q:
                 if ui.show_rules:
                     ui.show_rules = False
-    if not ui.winner:
+    if ui.winner is None:
         ui.draw_menu(mouse_pos)
         if ui.show_rules:
             ui.draw_rules()
@@ -110,7 +107,6 @@ def play_turn(ui, game, ai):
                 ui.running = False
                 break
             elif event.key == pygame.K_r and ui.winner:
-                game.board.reset()
                 ui.winner = None
                 ui.mode = None
                 ui.game_mode = None
@@ -189,6 +185,25 @@ if __name__ == "__main__":
             if ui.error_time <= 0:
                 ui.error_message = None
                 ui.error_cell = None
+        if ui.winner:
+            mouse_pos = pygame.mouse.get_pos()
+            ui.draw_board()
+            ui.draw_winner(ui.winner, mouse_pos)
+            pygame.display.flip()
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if ui.btn_restart.collidepoint(mouse_pos):
+                        game.board.reset()
+                        ui.winner = None
+                        ui.game_mode = None
+                        ui.mode = None
+                        break
+                    elif ui.btn_quit.collidepoint(mouse_pos):
+                        ui.winner = None
+                        ui.mode = "quit"
+                        ui.game_mode = "quit"
+                        ui.running = False
+            continue
         if ui.mode is None:
             set_mode(ui, ai)
             ui.turn_is = 1
@@ -201,7 +216,7 @@ if __name__ == "__main__":
                 elif ui.ai_level == "medium":
                     ai = MinimaxAI(game.board, max_depth=6, time_limit=0.5)
                 elif ui.ai_level == "hard":
-                    ai = MinimaxAI(game.board, max_depth=12, time_limit=1)
+                    ai = MinimaxAI(game.board, max_depth=12, time_limit=0.5)
                 else:
                     ai = MinimaxAI(game.board, max_depth=20, time_limit=20)
             continue
