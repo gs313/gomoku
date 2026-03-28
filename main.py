@@ -65,7 +65,7 @@ def play_turn(ui, game, ai):
             elif event.key == pygame.K_r and ui.winner:
                 game = GameState()
                 ui = GameUI(game)
-                ai = MinimaxAI(game.board, max_depth=20, time_limit=1)
+                ai = MinimaxAI(game.board, max_depth=20)
                 ui.winner = None
                 ui.mode = None
                 break
@@ -76,13 +76,13 @@ def play_turn(ui, game, ai):
             if ui.btn_menu.collidepoint(mouse_pos):
                 game = GameState()
                 ui = GameUI(game)
-                ai = MinimaxAI(game.board, max_depth=20, time_limit=1)
+                ai = MinimaxAI(game.board, max_depth=20)
                 ui.winner = None
                 ui.mode = None
                 break
             if ui.winner or ui.ai_thinking:
                 continue
-            
+
             cell = ui.get_cell(pygame.mouse.get_pos())
             if cell and game.put(*cell):
                 if ui.mode == "vs":
@@ -93,7 +93,7 @@ def play_turn(ui, game, ai):
                     else:
                         ui.player = 1
                         ui.turn = f"Player {ui.player} Turn"
-                        ui.text_colour = (70, 130, 255) 
+                        ui.text_colour = (70, 130, 255)
                 else:
                     ui.turn = "AI Turn"
                     ui.ai_turn = True
@@ -127,8 +127,8 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     game = GameState()
     ui = GameUI(game)
-    ai = MinimaxAI(game.board, max_depth=20,time_limit=1)
-    
+    ai = MinimaxAI(game.board, max_depth=12, time_limit=5)
+
     while ui.running:
         if ui.mode is None:
             set_mode(ui)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         ui, game, ai = play_turn(ui, game, ai)
         if ui.ai_turn and ui.running :
             ai_turn(ui, game, ai)
-        
+
         if ui.mode is None:
             continue
         ui.draw_board()

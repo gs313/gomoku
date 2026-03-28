@@ -18,10 +18,10 @@ class Heuristic:
         if self.board.check_win(opponent):
             return -10**9
 
-        if self.board.captures[player] >= 8:
+        if self.board.captures[player] >= 4:
             return 5 * 10**8   # almost winning
 
-        if self.board.captures[opponent] >= 8:
+        if self.board.captures[opponent] >= 4:
             return -5 * 10**8  # must block immediately
 
         my_score = self._evaluate_player(player)
