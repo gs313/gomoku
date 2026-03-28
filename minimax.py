@@ -135,7 +135,7 @@ class MinimaxAI:
             return self.tt[key]
 
         # terminal
-        if depth == 0 or self.board.check_win(root_player, fast=True) or self.board.check_win(-root_player, fast=True):
+        if depth == 0 or self.board.check_win(root_player) or self.board.check_win(-root_player):
             val = self.heuristic.evaluate(root_player)
             self.tt[key] = val
             return val
@@ -219,22 +219,22 @@ class MinimaxAI:
 
     def _get_moves(self, player, depth):
         #  1. forced moves first
-        forced = self._get_forced_moves(player)
-        if forced:
-            return forced
+        # forced = self._get_forced_moves(player)
+        # if forced:
+        #     return forced
 
         #  2. adaptive pruning
         moves = self.move_gen.generate(player)
-        return moves
+        # return moves
 
-        # if depth >= 8:
-        #     return moves[:10]
-        # if depth >= 6:
-        #     return moves[:12]
-        # elif depth >= 4:
-        #     return moves[:16]
-        # else:
-        #     return moves[:20]
+        if depth >= 8:
+            return moves[:10]
+        if depth >= 6:
+            return moves[:12]
+        elif depth >= 4:
+            return moves[:16]
+        else:
+            return moves[:20]
     def _get_forced_moves(self, player):
         opponent = -player
         winning_moves = []
@@ -246,7 +246,7 @@ class MinimaxAI:
 
             # 🏆 immediate win
             if self.board.play(x, y, player):
-                if self.board.check_win(player, fast=True):
+                if self.board.check_win(player):
                     self.board.undo()
                     return [(x, y)]
                 self.board.undo()

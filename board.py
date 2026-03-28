@@ -361,8 +361,8 @@ class Board:
     def _update_active_cells(self, x, y):
         added = []
 
-        for dx in range(-1, 2):
-            for dy in range(-1, 2):
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < SIZE and 0 <= ny < SIZE:
 

@@ -13,9 +13,9 @@ class Heuristic:
         opponent = -player
 
         #  Immediate win / loss detection
-        if self.board.check_win(player, fast=True):
+        if self.board.check_win(player):
             return 10**9
-        if self.board.check_win(opponent, fast=True):
+        if self.board.check_win(opponent):
             return -10**9
 
         if self.board.captures[player] >= 4:
@@ -50,7 +50,7 @@ class Heuristic:
         # if len(self.board.moves) > 6:
         #     threat_bonus = self._double_threat_bonus(player)
 
-        return my_score - 1.2 * opp_score +dynamic_bonus
+        return my_score - 1.5 * opp_score +dynamic_bonus
 
     # =========================
     # PLAYER SCORE (INCREMENTAL)
@@ -83,9 +83,9 @@ class Heuristic:
         c = self.board.captures[player]
 
         if c >= 3:
-            score += 20000   # super dangerous
+            score += 40000   # super dangerous
         elif c >= 2:
-            score += 5000
+            score += 10000
         else:
             score += c * 1600
         # score += self.board.captures[player] * 800
