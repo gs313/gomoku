@@ -21,7 +21,8 @@ class Board:
         self.captures = {BLACK: 0, WHITE: 0}
         self.last_move = None
 
-        self.active_cells = set()
+        # self.active_cells = set()
+        self.active_cells = {}  # (x,y) → count
 
     def reset(self):
         self.black_bits = 0
@@ -31,7 +32,8 @@ class Board:
         self.captures = {BLACK: 0, WHITE: 0}
         self.last_move = None
 
-        self.active_cells = set()
+        # self.active_cells = set()
+        self.active_cells = {}  # (x,y) → count
 
     # =========================
     # BASIC
@@ -133,10 +135,13 @@ class Board:
         # apply captures first
         captured = self._apply_captures(x, y, player)
 
-        self.moves.append((x, y, player, captured))
+        # self.moves.append((x, y, player, captured))
         self.last_move = (x, y)
 
-        self._update_active_cells(x, y)
+        # self._update_active_cells(x, y)
+        added_cells = self._update_active_cells(x, y)
+
+        self.moves.append((x, y, player, captured, added_cells))
 
         return True
 
@@ -144,7 +149,8 @@ class Board:
         if not self.moves:
             return
 
-        x, y, player, captured = self.moves.pop()
+        # x, y, player, captured = self.moves.pop()
+        x, y, player, captured, added_cells = self.moves.pop()
         move = idx(x, y)
         bit_mask = ~(1 << move)
 
@@ -163,6 +169,14 @@ class Board:
 
         self.captures[player] -= len(captured) // 2
         self.last_move = self.moves[-1][:2] if self.moves else None
+        for cell in added_cells:
+            if cell in self.active_cells:
+                self.active_cells[cell] -= 1
+                if self.active_cells[cell] <= 0:
+                    del self.active_cells[cell]
+        # remove the actual move position if present
+        if (x, y) in self.active_cells:
+            self.active_cells.pop((x, y), None)
 
     # =========================
     # CAPTURES
@@ -315,19 +329,57 @@ class Board:
     # ACTIVE CELLS
     # =========================
 
+    # def _update_active_cells(self, x, y):
+    #     for dx in range(-2, 3):
+    #         for dy in range(-2, 3):
+    #             nx, ny = x + dx, y + dy
+    #             if 0 <= nx < SIZE and 0 <= ny < SIZE:
+    #                 self.active_cells.add((nx, ny))
+
+    # def get_candidate_moves(self):
+    #     if not self.moves:
+    #         return [(SIZE//2, SIZE//2)]
+
+    #     return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
+
+    # def get_candidate_moves(self):
+    #     if not self.moves:
+    #         return [(SIZE//2, SIZE//2)]
+
+    #     candidates = set()
+
+    #     for (x, y, _, _) in self.moves:
+    #         for dx in range(-1, 2):
+    #             for dy in range(-1, 2):
+    #                 nx, ny = x + dx, y + dy
+    #                 if 0 <= nx < SIZE and 0 <= ny < SIZE:
+    #                     if not self.has_stone(nx, ny):
+    #                         candidates.add((nx, ny))
+
+    #     return list(candidates)
+
     def _update_active_cells(self, x, y):
-        for dx in range(-2, 3):
-            for dy in range(-2, 3):
+        added = []
+
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < SIZE and 0 <= ny < SIZE:
-                    self.active_cells.add((nx, ny))
 
+                    if not self.has_stone(nx, ny):
+                        if (nx, ny) not in self.active_cells:
+                            self.active_cells[(nx, ny)] = 1
+                            added.append((nx, ny))
+                        else:
+                            self.active_cells[(nx, ny)] += 1
+
+        return added
     def get_candidate_moves(self):
         if not self.moves:
             return [(SIZE//2, SIZE//2)]
 
-        return [(x, y) for (x, y) in self.active_cells if not self.has_stone(x, y)]
-# ========================
+        return list(self.active_cells.keys())
+        # # ========================
 #   Check Win
 # =========================
 
@@ -354,18 +406,19 @@ class Board:
                 return True
 
         return False
-    def check_win(self, player):
+    def check_win(self, player,fast=False):
         opponent = -player
 
-        # 🏆 Capture win
+        # Capture win
         if self.captures[player] >= 5:
             return True
-
-        # 🏆 Line win (needs validation)
+        #  Line win (needs validation)
         if self.last_move:
             x, y = self.last_move
 
             if self._is_player(x, y, player):
+                if fast:
+                    return self._check_from(x, y, player)
                 if self._check_from(x, y, player):
 
                     # 🚨 check if opponent can break it

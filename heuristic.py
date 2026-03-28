@@ -13,9 +13,9 @@ class Heuristic:
         opponent = -player
 
         #  Immediate win / loss detection
-        if self.board.check_win(player):
+        if self.board.check_win(player, fast=True):
             return 10**9
-        if self.board.check_win(opponent):
+        if self.board.check_win(opponent, fast=True):
             return -10**9
 
         if self.board.captures[player] >= 4:
@@ -30,7 +30,7 @@ class Heuristic:
         dynamic_bonus = 0
 
         if self.board.moves:
-            x, y, last_player, _ = self.board.moves[-1]
+            x, y, last_player, *_ = self.board.moves[-1]
 
             # 🚨 opponent just played something dangerous
             if last_player == opponent:
@@ -65,7 +65,7 @@ class Heuristic:
         #  Only evaluate around recent moves (performance critical)
         positions = set()
 
-        for (x, y, _, _) in self.board.moves[-6:]:
+        for (x, y, *_) in self.board.moves[-6:]:
             for dx in range(-2, 3):
                 for dy in range(-2, 3):
                     nx, ny = x + dx, y + dy

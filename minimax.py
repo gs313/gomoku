@@ -11,6 +11,10 @@ class MinimaxAI:
         self.max_depth = max_depth
         self.time_limit = time_limit
 
+        self.nodes = 0
+        self.depth_reached = 0
+        self.last_completed_depth = 0
+
         self.heuristic = Heuristic(board)
         self.move_gen = MoveGenerator(board)
 
@@ -26,15 +30,38 @@ class MinimaxAI:
         self.start_time = time.time()
         self.stop = False
 
+        self.nodes = 0
+        self.depth_reached = 0
+        self.last_completed_depth = 0
         best_move = None
 
         for depth in range(1, self.max_depth + 1):
             score, move = self._search_root(player, depth, best_move)
 
+            if self.stop:
+                break
+            if not self.stop:
+                self.last_completed_depth = depth
             if move is not None:
                 best_move = move
+        self.depth_reached = self.last_completed_depth
+
+        self._print_search_stats()
 
         return best_move
+
+    def _print_search_stats(self):
+        elapsed = time.time() - self.start_time
+
+        print("\n=== AI SEARCH STATS ===")
+        print(f"Time: {elapsed:.3f}s")
+        print(f"Nodes searched: {self.nodes}")
+        print(f"Effective depth: {self.depth_reached}")
+
+        if elapsed > 0:
+            print(f"Nodes/sec: {int(self.nodes / elapsed)}")
+
+        print("========================\n")
 
     def _time_exceeded(self):
         if self.time_limit is None:
@@ -58,6 +85,8 @@ class MinimaxAI:
             moves.insert(0, prev_best)
 
         for move in moves:
+            if self.stop:
+                break
             x, y = move
 
             # if not self.board.play(x, y, player):
@@ -94,17 +123,19 @@ class MinimaxAI:
     # =========================
 
     def _alphabeta(self, depth, alpha, beta, player, maximizing, root_player):
+        self.nodes += 1
         # ⏱️ TIME CHECK
         if self._time_exceeded():
             self.stop = True
-            return self.heuristic.evaluate(root_player)
+            # return self.heuristic.evaluate(root_player)
+            return 0
         key = (self._hash(), depth, maximizing, player)
 
         if key in self.tt:
             return self.tt[key]
 
         # terminal
-        if depth == 0 or self.board.check_win(root_player) or self.board.check_win(-root_player):
+        if depth == 0 or self.board.check_win(root_player, fast=True) or self.board.check_win(-root_player, fast=True):
             val = self.heuristic.evaluate(root_player)
             self.tt[key] = val
             return val
@@ -124,6 +155,8 @@ class MinimaxAI:
             value = -INF
 
             for move in moves:
+                if self.stop:
+                    break
                 x, y = move
 
                 # if not self.board.play(x, y, player):
@@ -153,6 +186,8 @@ class MinimaxAI:
             value = INF
 
             for move in moves:
+                if self.stop:
+                    break
                 x, y = move
 
                 # if not self.board.play(x, y, player):
@@ -183,14 +218,16 @@ class MinimaxAI:
 
 
     def _get_moves(self, player, depth):
-        # 🚨 1. forced moves first
+        #  1. forced moves first
         forced = self._get_forced_moves(player)
         if forced:
             return forced
 
-        # 📉 2. adaptive pruning
+        #  2. adaptive pruning
         moves = self.move_gen.generate(player)
 
+        if depth >= 8:
+            return moves[:3]
         if depth >= 6:
             return moves[:4]
         elif depth >= 4:
@@ -208,14 +245,14 @@ class MinimaxAI:
 
             # 🏆 immediate win
             if self.board.play(x, y, player):
-                if self.board.check_win(player):
+                if self.board.check_win(player, fast=True):
                     self.board.undo()
                     return [(x, y)]
                 self.board.undo()
 
             # 🛑 block opponent win
             if self.board.play(x, y, opponent):
-                if self.board.check_win(opponent):
+                if self.board.check_win(opponent, fast=True):
                     blocking_moves.append((x, y))
                 self.board.undo()
 

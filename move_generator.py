@@ -43,7 +43,7 @@ class MoveGenerator:
         self.board.play(x, y, player)
 
         # 1. Immediate win (alignment or capture)
-        if self.board.check_win(player):
+        if self.board.check_win(player, fast=True):
             self.board.undo()
             return 10**9
 
@@ -143,13 +143,13 @@ class MoveGenerator:
 
     def _is_blocking_four(self, x, y, player):
         opponent = -player
-        dangerous = self.board.check_win(opponent)
+        dangerous = self.board.check_win(opponent, fast=True)
         # simulate opponent placing HERE
         if not self.board.is_legal_move(x, y, opponent):
             return dangerous
         self.board.play(x, y, opponent)
 
-        dangerous = self.board.check_win(opponent)
+        dangerous = self.board.check_win(opponent, fast=True)
 
         self.board.undo()
 
