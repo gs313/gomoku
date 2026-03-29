@@ -67,11 +67,11 @@ def set_game(ui, ai):
                 ui.show_rules = False
                 continue
             if ui.btn_mode1.collidepoint(mouse_pos):
-                ui.game_mode = "standard"
+                ui.rule = "standard"
             elif ui.btn_mode2.collidepoint(mouse_pos):
-                ui.game_mode = "renju"
+                ui.rule = "pro"
             elif ui.btn_mode3.collidepoint(mouse_pos):
-                ui.game_mode = "freestyle"
+                ui.rule = "swap"
             elif ui.btn_back.collidepoint(mouse_pos):
                 ui.mode = None
                 break
@@ -106,35 +106,69 @@ def play_turn(ui, game, ai):
                 game.reset()
                 ui.reset()
                 break
-            if ui.winner or ui.ai_thinking:
+            elif ui.show_swap and ui.btn_swap.collidepoint(mouse_pos):
+                print("Player chose to swap")
+                ui.is_swap = True
+                ui.show_swap = False
+                if ui.player == 1:
+                    ui.player = 2
+                else:                    
+                    ui.player = 1
+                ui.turn = f"Player {ui.player} turn"
+                ui.rule = "standard"
+                pygame.event.clear(pygame.MOUSEBUTTONDOWN)
+                break
+            elif ui.show_swap and ui.btn_play.collidepoint(mouse_pos):
+                print("Player chose to play")
+                ui.show_swap = False
+                ui.rule = "standard"
+                pygame.event.clear(pygame.MOUSEBUTTONDOWN)
+                break
+            if ui.winner or ui.ai_thinking or ui.show_swap:
                 continue
-
             cell = ui.get_cell(pygame.mouse.get_pos())
             if cell:
                 ui.hint = False
                 if game.put(*cell):
                     if ui.mode == "vs":
+                        if (ui.move_count == 0 or ui.move_count == 2) and ui.rule == "pro":
+                            is_legal, message = game.is_legal_rule(*cell, ui.move_count, ui.rule)
+                            if not is_legal:
+                                game.undo()
+                                ui.error_message = message
+                                ui.error_cell = cell
+                                ui.error_time = 0.7
+                                continue
                         if ui.player == 1:
                             ui.player = 2
+                            if ui.rule == "swap" and ui.move_count < 2:
+                                ui.player = 1
                             ui.turn = f"Player {ui.player} turn"
                             ui.text_colour = (240, 240, 240)
-                            ui.turn_is = ui.turn_is + 1
+                            ui.move_count = ui.move_count + 1
                         else:
                             ui.player = 1
                             ui.turn = f"Player {ui.player} Turn"
                             ui.text_colour = (70, 130, 255)
-                            ui.turn_is = ui.turn_is + 1
+                            ui.move_count = ui.move_count + 1
                     else:
                         ui.turn = "AI Turn"
                         ui.ai_turn = True
+                        if ui.rule == "swap" and ui.move_count < 3:
+                            ui.turn = "Your Turn"
+                            ui.ai_turn = False
                         ui.text_colour = (255, 80, 80)
                         ui.just_played = True
-                        ui.turn_is = ui.turn_is + 1
+                        ui.move_count = ui.move_count + 1
                 else:
                     ui.error_message = "Invalid move (Double Three or have stone)"
                     ui.error_cell = cell
                     ui.error_time = 0.7
-
+    if ui.rule == "swap" and ui.move_count == 3:
+        ui.player = 2
+        ui.show_swap = True
+        ui.turn = f"Player {ui.player} Turn"
+        ui.text_colour = (70, 130, 255)
     return ui, game, ai
 
 def ai_turn(ui, game, ai):
@@ -152,7 +186,7 @@ def ai_turn(ui, game, ai):
             ui.ai_thinking = False
             ui.turn = "Your Turn"
             ui.text_colour = (70, 130, 255)
-            ui.turn_is = ui.turn_is + 1
+            ui.move_count = ui.move_count + 1
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             pygame.event.clear(pygame.MOUSEBUTTONDOWN)
 
@@ -175,7 +209,7 @@ if __name__ == "__main__":
             continue
         if ui.mode is None:
             set_mode(ui, ai)
-            ui.turn_is = 1
+            ui.move_count = 0
             if ui.mode == "ai":
                 ui.ai_turn = False
                 ui.turn = "AI Turn"
@@ -189,13 +223,13 @@ if __name__ == "__main__":
                 else:
                     ai = MinimaxAI(game.board, max_depth=20, time_limit=0.5)
             continue
-        if ui.game_mode is None:
+        if ui.mode is None:
+            continue
+        if ui.rule is None:
             ui.frist_turn = True
             set_game(ui, ai)
             continue
-
-        if ui.mode is None:
-            continue
+        
         if ui.ai_turn and ui.running and not ui.winner:
             if ui.frist_turn:
                 ui.frist_turn = False
@@ -214,6 +248,10 @@ if __name__ == "__main__":
         ui.draw_error()
         ui.draw_error_cell()
         mouse_pos = pygame.mouse.get_pos()
+        if ui.show_swap:
+            ui.draw_button("Swap or Play?", 200, mouse_pos, bg_color=(0,0,0), text_color=(70, 130, 255))
+            ui.btn_swap = ui.draw_button("SWAP", 300, mouse_pos)
+            ui.btn_play = ui.draw_button("PLAY", 400, mouse_pos)
         if not ui.winner:
             ui.btn_menu = ui.draw_back_button(mouse_pos)
             check_win(game, ui)

@@ -32,12 +32,15 @@ class GameUI:
         self.error_cell = None
         self.ai_menu_open = False
         self.ai_buttons = []
-        self.game_mode = None
+        self.rule = None
         self.frist_turn = True
-        self.turn_is = 1
+        self.move_count = 0
         self.last_ai_move = None
         self.hint = False
         self.hint_cell = None
+        self.start_rule = None
+        self.show_swap = False
+        self.is_swap = False
         
 
         pygame.init()
@@ -91,7 +94,10 @@ class GameUI:
             py = self.MARGIN + x * self.CELL_SIZE
 
             radius = self.CELL_SIZE // 3
-            color = (0,0,0,100) if self.player == 1 else (255,255,255,100)
+            if self.is_swap:
+                color = (255,255,255,100) if self.player == 1 else (0,0,0,100)
+            else:
+                color = (0,0,0,100) if self.player == 1 else (255,255,255,100)
             ghost = pygame.Surface((radius*2, radius*2), pygame.SRCALPHA)
             pygame.draw.circle(ghost, color, (radius, radius), radius)
 
@@ -133,7 +139,7 @@ class GameUI:
 
         center_x = self.WINDOW_SIZE // 2
 
-        turn_text = f"Turn {(self.turn_is - 1) // 2 + 1}"
+        turn_text = f"Turn {(self.move_count) // 2 + 1}"
         turn_surf = self.font_large.render(turn_text, True, (255, 215, 0))
 
         BOX_W = 240
@@ -265,9 +271,9 @@ class GameUI:
         spacing = 120
         start_y = center_y - 40
 
-        self.btn_mode1   = self.draw_button("MODE1", start_y, mouse_pos)
-        self.btn_mode2   = self.draw_button("MODE2", start_y + spacing, mouse_pos)
-        self.btn_mode3 = self.draw_button("MODE3", start_y + spacing * 2, mouse_pos)
+        self.btn_mode1   = self.draw_button("STANDARD", start_y, mouse_pos)
+        self.btn_mode2   = self.draw_button("PRO", start_y + spacing, mouse_pos)
+        self.btn_mode3 = self.draw_button("SWAP", start_y + spacing * 2, mouse_pos)
         self.btn_back = self.draw_button("BACK", start_y + spacing * 3, mouse_pos)
 
 
@@ -301,7 +307,7 @@ class GameUI:
         return self.draw_button("BACK TO MENU", self.WINDOW_SIZE - 35 , mouse_pos, 24, 50, 200)
 
 
-    def draw_button(self, text, y, mouse_pos, fontsize=42, height=70, width=None):
+    def draw_button(self, text, y, mouse_pos, fontsize=42, height=70, width=None, bg_color=None, text_color=(255,255,255)): 
         font = pygame.font.SysFont(None, fontsize)
 
         WIDTH = self.WINDOW_SIZE // 3
@@ -314,15 +320,18 @@ class GameUI:
         box_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
         box_rect.center = (center_x, y)
 
-        hover = box_rect.collidepoint(mouse_pos)
+        
 
         box = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-
-        if hover or (self.ai_menu_open and text == "PLAYER vs AI"):
-            box_rect.inflate_ip(10, 6)
-            bg_color = (120, 120, 150, 220)
+        hover = box_rect.collidepoint(mouse_pos)
+        if bg_color is None:
+            if hover or (self.ai_menu_open and text == "PLAYER vs AI"):
+                box_rect.inflate_ip(10, 6)
+                bg_color = (120, 120, 150, 220)
+            else:
+                bg_color = (60, 60, 80, 160)
         else:
-            bg_color = (60, 60, 80, 160)
+            hover = None
 
         pygame.draw.rect(box, bg_color, box.get_rect(), border_radius=14)
 
@@ -333,7 +342,7 @@ class GameUI:
         self.screen.blit(box, box_rect.topleft)
 
         # ===== TEXT (center in box) =====
-        text_surf = font.render(text, True, (255,255,255))
+        text_surf = font.render(text, True, text_color)
         text_rect = text_surf.get_rect(center=box_rect.center)
 
         # shadow
@@ -401,53 +410,60 @@ class GameUI:
 
     def draw_score(self, game):
         black_score, white_score = game.board.get_capture_counts()
-
         font = pygame.font.SysFont(None, 36)
 
         panel_w = 140
         panel_h = 60
         margin_y = 20
 
-        # ===== LEFT (BLACK) =====
         left_x = self.CELL_SIZE
-
-        left_rect = pygame.Rect(left_x, margin_y, panel_w, panel_h)
-        pygame.draw.rect(self.screen, (80,80,80), left_rect, border_radius=10)
-        if game.current_player == 1:
-            pygame.draw.rect(self.screen, (200,200,200), left_rect, 3, border_radius=10)
-
-            glow = pygame.Surface((left_rect.width+12, left_rect.height+12), pygame.SRCALPHA)
-            pygame.draw.rect(glow, (200,200,200,60), glow.get_rect(), border_radius=12)
-            self.screen.blit(glow, (left_rect.x-6, left_rect.y-6))
-
-        # stone
-        pygame.draw.circle(self.screen, (0,0,0), (left_rect.x + 30, left_rect.centery), 18)
-
-        # text (center in remaining space)
-        text = font.render(str(black_score), True, (255,255,255))
-        text_rect = text.get_rect(center=(left_rect.x + 90, left_rect.centery))
-        self.screen.blit(text, text_rect)
-
-        # ===== RIGHT (WHITE) =====
         right_x = self.WINDOW_SIZE - self.CELL_SIZE - panel_w
 
+        # 🔥 swap logic
+        if self.is_swap:
+            left_score, right_score = white_score, black_score
+            left_player, right_player = -1, 1
+            left_color, right_color = (255,255,255), (0,0,0)
+        else:
+            left_score, right_score = black_score, white_score
+            left_player, right_player = 1, -1
+            left_color, right_color = (0,0,0), (255,255,255)
+
+        def draw_panel(rect, player, score, stone_color, is_left):
+            # background
+            pygame.draw.rect(self.screen, (80,80,80), rect, border_radius=10)
+
+            # highlight current player
+            if game.current_player == player:
+                pygame.draw.rect(self.screen, (200,200,200), rect, 3, border_radius=10)
+
+                glow = pygame.Surface((rect.width+12, rect.height+12), pygame.SRCALPHA)
+                pygame.draw.rect(glow, (200,200,200,60), glow.get_rect(), border_radius=12)
+                self.screen.blit(glow, (rect.x-6, rect.y-6))
+
+            # stone position
+            if is_left:
+                stone_pos = (rect.x + 30, rect.centery)
+                text_pos = (rect.x + 90, rect.centery)
+            else:
+                stone_pos = (rect.right - 30, rect.centery)
+                text_pos = (rect.right - 90, rect.centery)
+
+            # draw stone
+            pygame.draw.circle(self.screen, stone_color, stone_pos, 18)
+
+            # draw score
+            text = font.render(str(score), True, (255,255,255))
+            text_rect = text.get_rect(center=text_pos)
+            self.screen.blit(text, text_rect)
+
+        # create rects
+        left_rect = pygame.Rect(left_x, margin_y, panel_w, panel_h)
         right_rect = pygame.Rect(right_x, margin_y, panel_w, panel_h)
-        pygame.draw.rect(self.screen, (80,80,80), right_rect, border_radius=10)
-        # background brighter
 
-        if game.current_player == -1:
-            pygame.draw.rect(self.screen, (200,200,200), right_rect, 3, border_radius=10)
-
-            glow = pygame.Surface((right_rect.width+12, right_rect.height+12), pygame.SRCALPHA)
-            pygame.draw.rect(glow, (200,200,200,60), glow.get_rect(), border_radius=12)
-            self.screen.blit(glow, (right_rect.x-6, right_rect.y-6))
-                # stone
-        pygame.draw.circle(self.screen, (255,255,255), (right_rect.right - 30, right_rect.centery), 18)
-
-        # text
-        text = font.render(str(white_score), True, (255,255,255))
-        text_rect = text.get_rect(center=(right_rect.right - 90, right_rect.centery))
-        self.screen.blit(text, text_rect)
+        # draw both panels
+        draw_panel(left_rect, left_player, left_score, left_color, True)
+        draw_panel(right_rect, right_player, right_score, right_color, False)
 
     def get_cell(self, pos):
         mx, my = pos
@@ -478,12 +494,15 @@ class GameUI:
         self.error_time = 0
         self.error_cell = None
         self.ai_menu_open = False
-        self.game_mode = None
+        self.rule = None
+        self.start_rule = None
         self.frist_turn = True
-        self.turn_is = 1
+        self.move_count = 0
         self.last_ai_move = None
         self.hint = False
         self.hint_cell = None
+        self.show_swap = False
+        self.is_swap = False
     
 import pygame
 import math
