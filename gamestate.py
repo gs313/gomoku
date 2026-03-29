@@ -35,7 +35,6 @@ class GameState:
         return True
     def is_legal_rule(self, x, y, move_count, rule):
         center = self.BOARD_SIZE // 2
-        print(f"Checking rule for move {move_count} at ({x}, {y}) under rule '{rule}'")
         if rule == "pro":
             if move_count == 0:
                 return x == center and y == center , "First move must be at the center"

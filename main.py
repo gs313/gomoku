@@ -137,7 +137,7 @@ def play_turn(ui, game, ai):
                                 game.undo()
                                 ui.error_message = message
                                 ui.error_cell = cell
-                                ui.error_time = 0.7
+                                ui.error_time = 1
                                 continue
                         if ui.player == 1:
                             ui.player = 2
@@ -249,9 +249,11 @@ if __name__ == "__main__":
         ui.draw_error_cell()
         mouse_pos = pygame.mouse.get_pos()
         if ui.show_swap:
-            ui.draw_button("Swap or Play?", 200, mouse_pos, bg_color=(0,0,0), text_color=(70, 130, 255))
-            ui.btn_swap = ui.draw_button("SWAP", 300, mouse_pos)
-            ui.btn_play = ui.draw_button("PLAY", 400, mouse_pos)
+            start_y = ui.CELL_SIZE * 4
+            space = ui.CELL_SIZE
+            ui.draw_button("Swap or Play?", start_y, mouse_pos, bg_color=(0,0,0), text_color=(70, 130, 255))
+            ui.btn_swap = ui.draw_button("SWAP", start_y + space, mouse_pos)
+            ui.btn_play = ui.draw_button("PLAY", start_y + space * 2, mouse_pos)
         if not ui.winner:
             ui.btn_menu = ui.draw_back_button(mouse_pos)
             check_win(game, ui)

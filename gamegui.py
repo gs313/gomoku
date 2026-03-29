@@ -142,8 +142,8 @@ class GameUI:
         turn_text = f"Turn {(self.move_count) // 2 + 1}"
         turn_surf = self.font_large.render(turn_text, True, (255, 215, 0))
 
-        BOX_W = 240
-        BOX_H = 70
+        BOX_W = self.CELL_SIZE * 2.5
+        BOX_H = self.CELL_SIZE * 0.8
 
         turn_box = pygame.Rect(0, 0, BOX_W, BOX_H)
         turn_box.center = (center_x - 130, y)
@@ -173,16 +173,13 @@ class GameUI:
         px = self.MARGIN + y * self.CELL_SIZE
         py = self.MARGIN + x * self.CELL_SIZE
 
-        # 🔥 วงแดง
         pygame.draw.circle(self.screen, (255, 80, 80), (px, py), self.CELL_SIZE // 3 + 8, 3)
 
-        # 🔥 หรือ X
         size = self.CELL_SIZE // 3
         pygame.draw.line(self.screen, (255,80,80), (px-size, py-size), (px+size, py+size), 3)
         pygame.draw.line(self.screen, (255,80,80), (px+size, py-size), (px-size, py+size), 3)
 
     def draw_winner(self, text, mouse_pos):
-        # ===== DARK OVERLAY =====
         overlay = pygame.Surface((self.WINDOW_SIZE, self.WINDOW_SIZE), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 210))
         self.screen.blit(overlay, (0, 0))
@@ -190,7 +187,6 @@ class GameUI:
         center_x = self.WINDOW_SIZE // 2
         center_y = self.WINDOW_SIZE // 2
 
-        # ===== TITLE =====
         font = pygame.font.SysFont(None, 80)
         text_surf = font.render(text, True, (0, 255, 255))
         rect = text_surf.get_rect(center=(center_x, center_y - 120))
@@ -199,16 +195,15 @@ class GameUI:
         self.screen.blit(shadow, (rect.x+3, rect.y+3))
         self.screen.blit(text_surf, rect)
 
-        # ===== BUTTONS =====
-        spacing = 100
+        spacing = self.CELL_SIZE
 
         self.btn_restart = self.draw_button(
             "BACK TO MENU",
             center_y,
             mouse_pos,
             fontsize=40,
-            width=260,
-            height=70
+            width=self.CELL_SIZE * 2.5,
+            height=self.CELL_SIZE * 0.8
         )
 
         self.btn_quit = self.draw_button(
@@ -216,8 +211,8 @@ class GameUI:
             center_y + spacing,
             mouse_pos,
             fontsize=40,
-            width=260,
-            height=70
+            width=self.CELL_SIZE * 2.5,
+            height=self.CELL_SIZE * 0.8
         )
 
     def draw_menu(self, mouse_pos):
@@ -237,8 +232,8 @@ class GameUI:
         self.screen.blit(shadow, (rect.x+4, rect.y+4))
         self.screen.blit(title, rect)
 
-        spacing = 120
-        start_y = center_y - 40
+        spacing = self.CELL_SIZE
+        start_y = center_y - self.CELL_SIZE // 2
 
         self.btn_vs   = self.draw_button("PLAYER vs PLAYER", start_y, mouse_pos)
         self.btn_ai   = self.draw_button("PLAYER vs AI", start_y + spacing, mouse_pos)
@@ -268,8 +263,8 @@ class GameUI:
         self.screen.blit(shadow, (rect.x+4, rect.y+4))
         self.screen.blit(title, rect)
 
-        spacing = 120
-        start_y = center_y - 40
+        spacing = self.CELL_SIZE
+        start_y = center_y - self.CELL_SIZE // 2
 
         self.btn_mode1   = self.draw_button("STANDARD", start_y, mouse_pos)
         self.btn_mode2   = self.draw_button("PRO", start_y + spacing, mouse_pos)
@@ -282,7 +277,7 @@ class GameUI:
         self.ai_buttons = []
 
         center_x = self.WINDOW_SIZE // 2  + (self.WINDOW_SIZE // 6) + 10
-        spacing = 70
+        spacing = self.CELL_SIZE // 1.5
 
         for i, opt in enumerate(options):
             y = ai_y + i * spacing
@@ -307,13 +302,16 @@ class GameUI:
         return self.draw_button("BACK TO MENU", self.WINDOW_SIZE - 35 , mouse_pos, 24, 50, 200)
 
 
-    def draw_button(self, text, y, mouse_pos, fontsize=42, height=70, width=None, bg_color=None, text_color=(255,255,255)): 
+    def draw_button(self, text, y, mouse_pos, fontsize=42, height=None, width=None, bg_color=None, text_color=(255,255,255)): 
         font = pygame.font.SysFont(None, fontsize)
 
         WIDTH = self.WINDOW_SIZE // 3
         if width:
             WIDTH = width
-        HEIGHT = height
+        HEIGHT = self.CELL_SIZE // 1.5
+        if height:
+            HEIGHT = height
+        
 
         center_x = self.WINDOW_SIZE // 2
 
@@ -412,9 +410,9 @@ class GameUI:
         black_score, white_score = game.board.get_capture_counts()
         font = pygame.font.SysFont(None, 36)
 
-        panel_w = 140
-        panel_h = 60
-        margin_y = 20
+        panel_w = self.CELL_SIZE * 1.5
+        panel_h = self.CELL_SIZE * 0.6
+        margin_y = self.CELL_SIZE // 5
 
         left_x = self.CELL_SIZE
         right_x = self.WINDOW_SIZE - self.CELL_SIZE - panel_w
