@@ -145,6 +145,21 @@ class Board:
 
         return True
 
+    def play_fast(self, x, y, player):
+        move = idx(x, y)
+        bit = 1 << move
+
+        if player == BLACK:
+            self.black_bits |= bit
+        else:
+            self.white_bits |= bit
+
+        captured = self._apply_captures(x, y, player)
+
+        self.moves.append((x, y, player, captured))
+        self.last_move = (x, y)
+        return True
+
     def undo(self):
         if not self.moves:
             return

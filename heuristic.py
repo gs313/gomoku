@@ -65,7 +65,7 @@ class Heuristic:
         #  Only evaluate around recent moves (performance critical)
         positions = set()
 
-        for (x, y, *_) in self.board.moves[-4:]:
+        for (x, y, *_) in self.board.moves[-6:]:
             for dx in range(-2, 3):
                 for dy in range(-2, 3):
                     nx, ny = x + dx, y + dy

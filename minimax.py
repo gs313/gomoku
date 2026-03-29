@@ -80,7 +80,7 @@ class MinimaxAI:
 
         # moves = self.move_gen.generate(player)
         # print(len(moves))
-        moves = self._get_moves(player, depth)[:5]
+        moves = self._get_moves(player, depth)
         # moves = moves[:20]
 
         #  move ordering from previous iteration
@@ -93,8 +93,9 @@ class MinimaxAI:
                 break
             x, y = move
 
-            if not self.board.play(x, y, player):
-                continue
+            self.board.play_fast(x, y, player)
+            # if not self.board.play(x, y, player):
+            #     continue
             # if not self.board.is_legal_move(x, y, player):
             #     continue
             # self.board.play(x, y, player)
@@ -131,8 +132,8 @@ class MinimaxAI:
         # ⏱️ TIME CHECK
         if self._time_exceeded():
             self.stop = True
-            # return self.heuristic.evaluate(root_player)
-            return 0
+            return self.heuristic.evaluate(root_player)
+            # return 0
         key = (self._hash(), depth, maximizing, player)
 
         if key in self.tt:
@@ -162,25 +163,40 @@ class MinimaxAI:
         if maximizing:
             value = -INF
 
-            for move in moves:
-                if self.stop:
-                    break
+            for i, move in enumerate(moves):
                 x, y = move
 
-                if not self.board.play(x, y, player):
+                if not self.board.play_fast(x, y, player):
                     continue
-                # if not self.board.is_legal_move(x, y, player):
-                #     continue
-                # self.board.play(x, y, player)
 
-                score = self._alphabeta(
-                    depth - 1,
-                    alpha,
-                    beta,
-                    -player,
-                    False,
-                    root_player
-                )
+                if i == 0:
+                    score = self._alphabeta(
+                        depth-1,
+                        alpha,
+                        beta,
+                        -player,
+                        False,
+                        root_player
+                    )
+                else:
+                    score = self._alphabeta(
+                        depth-1,
+                        alpha,
+                        alpha + 1,
+                        -player,
+                        False,
+                        root_player
+                    )
+
+                    if score > alpha:
+                        score = self._alphabeta(
+                            depth-1,
+                            alpha,
+                            beta,
+                            -player,
+                            False,
+                            root_player
+                        )
 
                 self.board.undo()
 
@@ -188,8 +204,35 @@ class MinimaxAI:
                 alpha = max(alpha, value)
 
                 if alpha >= beta:
-                    self.killer_moves[depth] = move
                     break
+            # for move in moves:
+            #     if self.stop:
+            #         break
+            #     x, y = move
+
+            #     if not self.board.play(x, y, player):
+            #         continue
+            #     # if not self.board.is_legal_move(x, y, player):
+            #     #     continue
+            #     # self.board.play(x, y, player)
+
+            #     score = self._alphabeta(
+            #         depth - 1,
+            #         alpha,
+            #         beta,
+            #         -player,
+            #         False,
+            #         root_player
+            #     )
+
+            #     self.board.undo()
+
+            #     value = max(value, score)
+            #     alpha = max(alpha, value)
+
+            #     if alpha >= beta:
+            #         self.killer_moves[depth] = move
+            #         break
 
         else:
             value = INF
@@ -199,7 +242,7 @@ class MinimaxAI:
                     break
                 x, y = move
 
-                if not self.board.play(x, y, player):
+                if not self.board.play_fast(x, y, player):
                     continue
                 # if not self.board.is_legal_move(x, y, player):
                 #     continue
@@ -242,11 +285,11 @@ class MinimaxAI:
         # elif depth >= 8:
         #     return moves[:3]
         if depth >= 6:
-            return moves[:2]
+            return moves[:3]
         elif depth >= 4:
-            return moves[:4]
-        else:
             return moves[:6]
+        else:
+            return moves[:10]
 
     # def _get_forced_moves(self, player):
     #     opponent = -player
