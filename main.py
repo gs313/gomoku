@@ -243,7 +243,7 @@ if __name__ == "__main__":
         
         ui.draw_board()
         ui.draw_stones()
-        ui.draw_text(ui.turn, 50, ui.text_colour)
+        ui.draw_text(ui.turn, ui.CELL_SIZE // 2, ui.text_colour)
         ui.draw_score(game)
         ui.draw_error()
         ui.draw_error_cell()
