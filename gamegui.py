@@ -41,6 +41,8 @@ class GameUI:
         self.start_rule = None
         self.show_swap = False
         self.is_swap = False
+        self.notification = None
+        self.notification_timer = 0
         
 
         pygame.init()
@@ -463,6 +465,43 @@ class GameUI:
         draw_panel(left_rect, left_player, left_score, left_color, True)
         draw_panel(right_rect, right_player, right_score, right_color, False)
 
+    def draw_center_notification(self, message):
+        if not message:
+            return
+
+        # font
+        font = pygame.font.SysFont(None, 48)
+
+        # render text
+        text = font.render(message, True, (255, 255, 255))
+        text_rect = text.get_rect(center=(self.WINDOW_SIZE // 2, self.WINDOW_SIZE // 2))
+
+        # background box
+        padding_x = 30
+        padding_y = 20
+        bg_rect = pygame.Rect(
+            text_rect.x - padding_x,
+            text_rect.y - padding_y,
+            text_rect.width + padding_x * 2,
+            text_rect.height + padding_y * 2
+        )
+
+        # semi-transparent background
+        overlay = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(overlay, (0, 0, 0, 180), overlay.get_rect(), border_radius=12)
+        self.screen.blit(overlay, (bg_rect.x, bg_rect.y))
+
+        # border
+        pygame.draw.rect(self.screen, (200, 200, 200), bg_rect, 2, border_radius=12)
+
+        # glow (optional)
+        glow = pygame.Surface((bg_rect.width+20, bg_rect.height+20), pygame.SRCALPHA)
+        pygame.draw.rect(glow, (255,255,255,40), glow.get_rect(), border_radius=14)
+        self.screen.blit(glow, (bg_rect.x-10, bg_rect.y-10))
+
+        # draw text
+        self.screen.blit(text, text_rect)
+
     def get_cell(self, pos):
         mx, my = pos
 
@@ -501,6 +540,8 @@ class GameUI:
         self.hint_cell = None
         self.show_swap = False
         self.is_swap = False
+        self.notification = None
+        self.notification_timer = 0
     
 import pygame
 import math
